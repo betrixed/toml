@@ -679,6 +679,85 @@ toml;
         ], $array);
     }
 
+    public function testTakeSingleQuoteKeys()
+    {
+        $toml = <<<'toml'
+        [test]
+        'Like me' = 'yes'
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'test' => [
+                'Like me' => 'yes',
+            ]
+                ], $array);
+    }
+
+    public function testTomlSiteExample1()
+    {
+        $toml = <<<'toml'
+[[fruit.blah]]
+  name = "apple"
+
+  [fruit.blah.physical]
+    color = "red"
+    shape = "round"
+
+[[fruit.blah]]
+  name = "banana"
+
+  [fruit.blah.physical]
+    color = "yellow"
+    shape = "bent"
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'fruit' => [
+                [
+                    'blah' => [
+                        [
+                            'name' => 'apple',
+                            'physical' => [
+                                'color' => "red",
+                                'shape' => "round",
+                            ],
+                        ],
+                        [
+                            'name' => 'banana',
+                            'physical' => [
+                                'color' => "yellow",
+                                'shape' => "bent",
+                            ],
+                        ]
+                    ]
+                ],
+            ]
+                ], $array);
+    }
+
+    public function testConvertIntegerKeys()
+    {
+        $toml = <<<'toml'
+        [sequence]
+        -1 = 'detect person'
+        0 = 'say hello'
+        1 = 'chat'
+        10 = 'say bye'
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'sequence' => [
+                '-1' => 'detect person',
+                '0' => 'say hello',
+                '1' => 'chat',
+                '10' => 'say bye'
+            ]
+                ], $array);
+    }
+    
     public function testParseMustParseTableArrayOne()
     {
         $toml = <<<'toml'
