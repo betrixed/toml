@@ -16,7 +16,21 @@ TOM04 needs more test examples that are useful for software conformance testing
 In so many ways, the sets of "valid" and "invalid" test examples to run through TOML parsers, and their documented output structures, in whatever language, are the real TOM04 specification, as is for XML and other data formatting specifications. Having reference test documents and reference implementations that are able to read them do strongly indicate that the specification is reasonably self-consistant.  The actual TOM04 github site hasn't got that many full document examples. Where they exist, as in the tricky AOT - table example below, there isn't even a comment to say 'valid' or 'invalid'.
 Their is some collective wisdom amoung the many bits of TOML descriptions and example fragments in sepecification, which is a README.md document, even as they set up these collective puzzles.
 
+Changes in this PHP version
+-----------------------
+* A large number of changes from original "Yosymfomy/Toml" master.
+* Compare to previous, efficiency improvements on my setup, reduces total phpunit test run by about 22%.
+* Dependence on parser-utils repository is gone, by moving "LexerInterface" and "Token" classes from it to this repositiory.
+* "TokenStream" been radically changed to have only reused "Token" object, to return recently parsed data.
+* "Token" is downgraded to a simple PHP object, to return current parse token data from "TokenStream".
+* "TokenArray" has been created for the "LexerTest", having the minimum number of functions from the original "TokenStream"
+* Parser controls a stack of current set of regular expressions.
+* "TokenStream" uses regular expressions for multi-character tokens. 
+* Regular expression lists do not contain patterns for single character match
+* Match failure causes extraction of front unicode character, and tokenId is from the single character lookup table.
+* Many Error messages for php unit test results have some change.
 
+character 
 Array of Tables with [[All.Of.Me.Is.AOT]] seems very under specified.
 -----
 
@@ -235,4 +249,31 @@ If 'fruit' is first used without extra square brackets, then it is illegal to pu
 To be a complete specification, the table path [[fruit].[variety]] must be equivalent to [[fruit.variety]].
 and to be really specific or annoying we could put braces around table path parts,  such as [[fruit].{physical}], or say that no brackets implies curly braces.
 
+The above principle of square brace around path element(s) means AOT has been implemented. 
+An implicit AOT element does not get a new table added. A AOT element only gets a new table element added, 
+if it is the last path element. 
+
+This "last in path rule" very useful, and I feel it asks for some sort of special
+path value, like setting a '@', set to the current AOT path. For example
+
+```toml
+[[fruit]]
+  name = "apple"
+
+  [@.physical] # emphasize new table 'physical' uses same AOT path
+    color = "red"
+    shape = "round"
+
+    [@.[variety]]   # @ changes after the path is parsed, because a new AOT at the end
+    name = "red delicious"
+
+    [@]             # same AOT gets incremented, because it terminates the path
+    name = "granny smith"
+
+[[fruit]] # @ gets reset to [fruit]
+  name = "banana"
+```
+
+This change, not yet an implemented idea, would make an unquoted @ a special path character, and is incompatible
+with TOM04. 
 
