@@ -266,14 +266,14 @@ class LexerTest extends TestCase
     {
         $ts = $this->lexer->tokenize('[');
 
-        $this->assertTrue($ts->peekNext() === Lexer::T_LEFT_SQUARE_BRAKET);
+        $this->assertTrue($ts->peekNext() === Lexer::T_LEFT_SQUARE_BRACE);
     }
 
     public function testTokenizeMustRecognizeRightSquareBraket()
     {
         $ts = $this->lexer->tokenize(']');
 
-        $this->assertTrue($ts->peekNext() === Lexer::T_RIGHT_SQUARE_BRAKET);
+        $this->assertTrue($ts->peekNext() === Lexer::T_RIGHT_SQUARE_BRACE);
     }
 
     public function testTokenizeMustRecognizeDot()

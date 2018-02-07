@@ -11,7 +11,7 @@
 
 namespace Yosymfony\Toml;
 
-use Yosymfony\ParserUtils\SyntaxErrorException;
+use Yosymfony\Toml\Exception\SyntaxException;
 use Yosymfony\Toml\Exception\ParseException;
 
 /**
@@ -41,7 +41,7 @@ class Toml
     {
         try {
             $data = self::doParse($input, $resultAsObject);
-        } catch (SyntaxErrorException $e) {
+        } catch (SyntaxException $e) {
             $exception = new ParseException($e->getMessage(), -1, null, null, $e);
 
             if ($token = $e->getToken()) {
@@ -82,7 +82,7 @@ class Toml
 
         try {
             $data = self::doParse(file_get_contents($filename), $resultAsObject);
-        } catch (SyntaxErrorException $e) {
+        } catch (SyntaxException $e) {
             $exception = new ParseException($e->getMessage());
             $exception->setParsedFile($filename);
 
