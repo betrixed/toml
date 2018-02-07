@@ -19,7 +19,7 @@ Their is some collective wisdom amoung the many bits of TOML descriptions and ex
 Changes in this PHP version
 -----------------------
 * A large number of changes from original "Yosymfomy/Toml" master.
-* Compare to previous, efficiency improvements on my setup, reduces total phpunit test run by about 22%.
+* Changes haved reduced total phpunit test run by about 22% of original.
 * Dependence on parser-utils repository is gone, by moving "LexerInterface" and "Token" classes from it to this repositiory.
 * "TokenStream" been radically changed to have only reused "Token" object, to return recently parsed data.
 * "Token" is downgraded to a simple PHP object, to return current parse token data from "TokenStream".
