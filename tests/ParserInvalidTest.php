@@ -310,7 +310,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Data types cannot be mixed in an array. Value: "1".
+     * @expectedExceptionMessage Array values already set to type 'integer', when type 'array' encountered
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesArraysAndInts()
     {
@@ -319,16 +319,23 @@ toml;
 
     /**
      * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Data types cannot be mixed in an array. Value: "1.1".
+     * @expectedExceptionMessage Array datatype already set to 'integer' when value 1.1 encountered
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesIntsAndFloats()
     {
         $this->parser->parse('ints-and-floats = [1, 1.1]');
     }
-
+/**
+     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedExceptionMessage Array datatype already set to 'float' when value 1 encountered
+     */
+    public function testParseMustFailWhenThereIsAnArrayWithMixedTypesFloatAndInts()
+    {
+        $this->parser->parse('ints-and-floats = [1.1, 1]');
+    }
     /**
      * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Data types cannot be mixed in an array. Value: "42".
+     * @expectedExceptionMessage Array datatype already set to 'string' when value 42 encountered
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesStringsAndInts()
     {

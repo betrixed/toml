@@ -59,6 +59,7 @@ class Parser
     const E_BSTRING = 3;
     
     private $ts; // so don't need to pass it around all the time
+    private $valueStruct;
     //
     // current expression table type, and stack of previous
     private $expSetId;
@@ -82,12 +83,20 @@ class Parser
            $regex[$idx] = Lexer::$Regex[$idx];
         }
     }
-    
-    public function popExpSet() {
+    /**
+     * Set the expression set to the previous on the
+     * expression set stack
+     */
+    public function popExpSet() : void{
         $value = array_pop($this->expStack);
         $this->setExpSet($value);
     }
-    public function pushExpSet(int $value) : void{
+    /**
+     * Push a known expression set defined by a 
+     * constant
+     * @param int $value
+     */
+    public function pushExpSet(int $value) : void {
         $this->expStack[] = $this->expSetId;
         $this->setExpSet($value);
     }
@@ -115,7 +124,10 @@ class Parser
         $this->regex = & Lexer::$Regex;
         $this->token = new Token();
     }
-    public function setupToml() {
+    /**
+     * Everything that must be setup before calling setInput
+     */
+    public function __construct() {
         
         $this->resetWorkArrayToResultArray();
         $this->setRegex(Lexer::$BriefList,$this->briefExpressions);
@@ -126,8 +138,16 @@ class Parser
         $ts = new TokenStream();
         $ts->setSingles(Lexer::$Singles);
         $ts->setUnknownId(Lexer::T_CHAR);
+       
+        $this->ts = $ts; // setExpSet requires this
+         // point to the base regexp array
+        $this->setExpSet(Parser::E_BRIEF);
         
-        $this->ts = $ts;
+        $this->valueStruct = new class() {
+
+            public $value;
+            public $type;
+        };
     }
 
     private function registerAOT(AOTRef $obj)
@@ -196,11 +216,8 @@ class Parser
 
         // this function does or dies
         
-        
-        $this->setupToml();
 
-        // point to the base regexp array
-        $this->setExpSet(Parser::E_BRIEF);
+        
         
         $this->ts->setInput($input);
         
@@ -307,8 +324,8 @@ class Parser
 
         $this->skipWhileSpace($ts);
         // assertNext causes token advance,
-        // now in realm of values and inline arrays, so full set of
-        // regular expressions.
+        // now in realm of values and inline arrays, so use set of
+        // regular expressions for most value types
         
         $this->pushExpSet(Parser::E_FULL); 
         
@@ -355,42 +372,45 @@ class Parser
 
     /**
      * @return object An object with two public properties: value and type.
+     * Returned object must be cloned to keep values of returned instance.
      */
     private function parseSimpleValue(TokenStream $ts)
     {
+        // reuse same instance
         $token = $ts->peekNext();
+        $v = $this->valueStruct;
         switch ($token) {
             case Lexer::T_BOOLEAN:
-                $type = 'boolean';
-                $value = $this->parseBoolean($ts);
+                $v->value = $this->parseBoolean($ts);
+                $v->type = 'boolean';
                 break;
             case Lexer::T_INTEGER:
-                $type = 'integer';
-                $value = $this->parseInteger($ts);
+                $v->value =$this->parseInteger($ts);
+                $v->type = 'integer';
                 break;
             case Lexer::T_FLOAT:
-                $type = 'float';
-                $value = $this->parseFloat($ts);
+                $v->value = $this->parseFloat($ts);
+                $v->type = 'float';
                 break;
             case Lexer::T_QUOTATION_MARK:
-                $type = 'string';
-                $value = $this->parseBasicString($ts);
+                $v->value = $this->parseBasicString($ts);
+                $v->type = 'string';
                 break;
             case Lexer::T_3_QUOTATION_MARK:
-                $type = 'string';
-                $value = $this->parseMultilineBasicString($ts);
+                $v->value = $this->parseMultilineBasicString($ts);
+                $v->type = 'string';
                 break;
             case Lexer::T_APOSTROPHE:
-                $type = 'string';
-                $value = $this->parseLiteralString($ts);
+                $v->value = $this->parseLiteralString($ts);
+                $v->type = 'string';
                 break;
             case Lexer::T_3_APOSTROPHE:
-                $type = 'string';
-                $value = $this->parseMultilineLiteralString($ts);
+                $v->value = $this->parseMultilineLiteralString($ts);
+                $v->type = 'string';
                 break;
             case Lexer::T_DATE_TIME:
-                $type = 'datetime';
-                $value = $this->parseDatetime($ts);
+                $v->value = $this->parseDatetime($ts);
+                $v->type = 'datetime';
                 break;
             default:
                 $this->unexpectedTokenError(
@@ -398,16 +418,7 @@ class Parser
                 );
                 break;
         }
-        $valueStruct = new class() {
-
-            public $value;
-            public $type;
-        };
-
-        $valueStruct->value = $value;
-        $valueStruct->type = $type;
-
-        return $valueStruct;
+        return $v;
     }
 
     private function parseBoolean(TokenStream $ts): bool
@@ -653,10 +664,15 @@ class Parser
         }
     }
 
+    /**
+     * Recursive call of itself.
+     * @param \Yosymfony\Toml\TokenStream $ts
+     * @return array
+     */
     private function parseArray(TokenStream $ts): array
     {
         $result = [];
-        $leaderType = '';
+        $leaderType = ''; // string representation of type of first array member
 
         $this->assertNext(Lexer::T_LEFT_SQUARE_BRACE, $ts);
         
@@ -672,12 +688,12 @@ class Parser
 
                 if ($leaderType !== 'array') {
                     $this->syntaxError(sprintf(
-                                    'Data types cannot be mixed in an array. Value: "%s".', $valueStruct->value
+ "Array values already set to type '%s', when type 'array' encountered" , $leaderType
                     ));
                 }
-
                 $result[] = $this->parseArray($ts);
             } else {
+                // Returned value is a singular class instance to pass parameters
                 $valueStruct = $this->parseSimpleValue($ts);
 
                 if ($leaderType === '') {
@@ -685,9 +701,9 @@ class Parser
                 }
 
                 if ($valueStruct->type !== $leaderType) {
-                    $this->syntaxError(sprintf(
-                                    'Data types cannot be mixed in an array. Value: "%s".', $valueStruct->value
-                    ));
+                    $this->syntaxError(
+                        sprintf("Array datatype already set to '%s' when value %s encountered", $leaderType, $valueStruct->value)
+                    );
                 }
 
                 $result[] = $valueStruct->value;
@@ -722,6 +738,7 @@ class Parser
 
     private function parseInlineTable(TokenStream $ts, string $keyName): void
     {
+        $this->pushExpSet(Parser::E_BRIEF); // looking for keys
         $this->assertNext(Lexer::T_LEFT_CURLY_BRACE, $ts);
 
         $priorWorkArray = &$this->workArray;
@@ -733,7 +750,7 @@ class Parser
             $this->currentKeyPrefix = $this->currentKeyPrefix . $keyName . ".";
         }
 
-        $this->parseSpaceIfExists($ts);
+        $this->skipWhileSpace($ts);
 
         if ($ts->peekNext() !== Lexer::T_RIGHT_CURLY_BRACE) {
             $this->parseKeyValue($ts, true);
@@ -743,11 +760,11 @@ class Parser
         while ($ts->peekNext() === Lexer::T_COMMA) {
             $ts->moveNext();
 
-            $this->parseSpaceIfExists($ts);
+            $this->skipWhileSpace($ts);
             $this->parseKeyValue($ts, true);
-            $this->parseSpaceIfExists($ts);
+            $this->skipWhileSpace($ts);
         }
-
+        $this->popExpSet();
         $this->assertNext(Lexer::T_RIGHT_CURLY_BRACE, $ts);
         if ($this->useKeyStore) {
             $this->currentKeyPrefix = $priorcurrentKeyPrefix;
