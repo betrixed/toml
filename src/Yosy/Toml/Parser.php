@@ -909,7 +909,7 @@ class Parser
                     $partName .= $pathSep . $section;
 
                     // does this object exist already?
-                    $testObj = $pobj->offsetExists($partKey) ? $pobj->$partKey : null;
+                    $testObj = $pobj->offsetExists($partKey) ? $pobj[$partKey] : null;
                     if (is_null($testObj)) {
                         if (!$hitNew) {
                             $hitNew = true;

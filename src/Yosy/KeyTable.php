@@ -31,11 +31,16 @@ class KeyTable extends Arrayable
 {
 
     public $_store;
-    
-    public function __construct(array $arrayConfig)
+
+    public function __construct(array $arrayConfig = null)
     {
-        foreach ($arrayConfig as $key => $value) {
-            $this->_store[$key] = $value;
+        //$this->setTag(true);
+        if (!is_null($arrayConfig)) {
+            foreach ($arrayConfig as $key => $value) {
+                $this->_store[$key] = $value;
+            }
+        } else {
+            $this->_store = [];
         }
     }
 
@@ -70,7 +75,6 @@ class KeyTable extends Arrayable
         return count($this->_store);
     }
 
-    
     public function get($index, $defaultValue = null)
     {
         return isset($this->_store[$index]) ? $this->_store[$index] : $defaultValue;
@@ -88,7 +92,7 @@ class KeyTable extends Arrayable
     {
         $arrayConfig = [];
         foreach ($this->_store as $key => $value) {
-            if ($recurse && is_object($value) && ($value instanceof \Yosy\KeyTable)) {
+            if ($recurse && is_object($value) && ($value instanceof \Yosy\Arrayable)) {
                 $arrayConfig[$key] = $value->toArray();
             } else {
                 $arrayConfig[$key] = $value;
@@ -116,7 +120,7 @@ class KeyTable extends Arrayable
         }
     }
 
-    public function merge(Mergeable $config): KeyTable 
+    public function merge(Mergeable $config): KeyTable
     {
         return $this->_merge($config);
     }
@@ -134,7 +138,8 @@ class KeyTable extends Arrayable
             $instance = $this;
         }
         foreach ($config->_store as $key => $value) {
-            $localObject = isset($instance->_store[$key]) ? $instance->_store[$key] : null;
+            $localObject = isset($instance->_store[$key]) ? $instance->_store[$key]
+                        : null;
 
             if (is_object($localObject)) {
                 // Are both objects Mergeable ? 
@@ -142,7 +147,6 @@ class KeyTable extends Arrayable
                     $this->_merge($value, $localObject);
                     continue;
                 }
-
             }
             $instance->_store[$key] = $value;
         }
