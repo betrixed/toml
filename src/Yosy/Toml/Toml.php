@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml;
+namespace Yosy\Toml;
 
-use Yosymfony\Toml\Exception\SyntaxException;
-use Yosymfony\Toml\Exception\ParseException;
+use Yosy\XArrayable;
+use Yosy\Toml\Exception\ParseException;
 
 /**
  * Parser for TOML format.
@@ -41,7 +41,7 @@ class Toml
     {
         try {
             $data = self::doParse($input, $resultAsObject);
-        } catch (SyntaxException $e) {
+        } catch (XArrayable $e) {
             $exception = new ParseException($e->getMessage(), -1, null, null, $e);
 
             if ($token = $e->getToken()) {
@@ -82,7 +82,7 @@ class Toml
 
         try {
             $data = self::doParse(file_get_contents($filename), $resultAsObject);
-        } catch (SyntaxException $e) {
+        } catch (XArrayable $e) {
             $exception = new ParseException($e->getMessage());
             $exception->setParsedFile($filename);
 

@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml\Exception;
+namespace Yosy\Toml\Exception;
 
 /**
  * Exception class thrown when an error occurs during dumping.

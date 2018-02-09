@@ -6,7 +6,9 @@
  * and open the template in the editor.
  */
 
-namespace Yosymfony\Toml;
+namespace Yosy;
+
+use Yosy\Lexer;
 
 /**
  * Description of TokenStream
@@ -17,6 +19,7 @@ namespace Yosymfony\Toml;
 class TokenStream
 {
     public $lines; // all lines
+    public $lineCount;
     
     public $curLine;
     public $id;
@@ -26,15 +29,23 @@ class TokenStream
     public $isSingle; // was found in single character list
 
     public $offset; // unparsed offset on current line
-    public $regex; // Reference to current set of tokens being searched for
+    public $regex; // Object of type KeyTable to current set of tokens being searched for
     public $singles; // Reference to single character lookup for tokenId
     public $unknownId; // int value to represent single character not in singles.
+    public $newLineId; //
+    public $eosId;
     public $token;  // The one and only token instance
     // topLevel parse
     
     
     public function __construct() {
         $this->token = new Token();
+    }
+    public function setEOSId(int $id) {
+        $this->eosId = $id;
+    }    
+    public function setNewLineId(int $id) {
+        $this->newLineId = $id;
     }
     public function setUnknownId(int $id)
     {
@@ -44,8 +55,8 @@ class TokenStream
      * Argument is reference to associative array[int] of string regular expressions
      * @param array $ref
      */
-    public function setExpList(array &$ref) {
-        $this->regex = &$ref;
+    public function setExpList(KeyTable $ref) {
+        $this->regex = $ref;
     }
     /** 
      * For lookup of tokenId of single character string
@@ -53,13 +64,13 @@ class TokenStream
      * @param array $ref
      */
     
-    public function setSingles(array &$ref) {
-        $this->singles = &$ref;
+    public function setSingles(KeyTable $ref) {
+        $this->singles = $ref;
     }
      public function setInput(string $input)
      {
-        $lines = explode("\n", $input);
-        $this->setLines($lines);
+        $boxme = new Box(explode("\n", $input));
+        $this->setLines($boxme);
      }
     /**
      * Apply a successful expression match to update token and text parse state
@@ -108,7 +119,7 @@ class TokenStream
             // which may or may not be in the explicit list
             return $this->id; 
         }
-        $pattern = $this->regex[$id];
+        $pattern = $this->regex->_store[$id];
         if (preg_match($pattern, $this->curLine, $matches)) {
             $this->applyMatch($id, $matches);
             return $id;
@@ -126,7 +137,7 @@ class TokenStream
         $skip = 0;
         while (true) {
            $nextId = $this->matchNextAny($idList);
-           if ($nextId !== Lexer::T_NEWLINE && $nextId !== Lexer::T_EOS) {
+           if ($nextId !== $this->newLineId && $nextId !== $this->eosId) {
                 $skip++; // was a text parse match
            }
            else {
@@ -136,7 +147,7 @@ class TokenStream
         return $skip;
     }
     public function hasPendingTokens() : bool {
-        return ($this->id !== Lexer::T_EOS && $this->id !== Lexer::T_BAD);
+        return ($this->id !== $this->eosId);
     }
     public function moveNext() : Token {
         $token = $this->token;
@@ -170,14 +181,13 @@ class TokenStream
     public function peekNext() : int {
         return $this->id;
     }
-    
-    
-    
-    public function setLines(& $lines) {
-        $this->lines = & $lines;
+
+    public function setLines(Box $lines) {
+        $this->lines = $lines;
         $this->lineNo = 0;
         $this->offset = 0;
-        $this->curLine = (count($lines) > 0) ? $lines[0] : null;
+        $this->lineCount = count($lines->_me);
+        $this->curLine = ($this->lineCount > 0) ? $lines->_me[0] : null;
         $this->loadNext();
     }
     
@@ -188,16 +198,16 @@ class TokenStream
     private function lineAvailable() : bool {
         if (empty($this->curLine)) {
             $nextLine = $this->lineNo + 1;
-            if ($nextLine < count($this->lines)) {
-               $this->curLine = $this->lines[$nextLine];
+            if ($nextLine < $this->lineCount) {
+               $this->curLine = $this->lines->_me[$nextLine];
                $this->offset = 0;
                $this->value = "\n";
-               $this->id = Lexer::T_NEWLINE;
+               $this->id = $this->newLineId;
                $this->lineNo = $nextLine;
             }
             else {
                $this->value = "";
-               $this->id = Lexer::T_EOS;
+               $this->id = $this->eosId;
             }
             $this->isSingle = true; // really
             return false;
@@ -220,7 +230,7 @@ class TokenStream
         // There are a lot of single character lexer Ids, so just look
         // them up in a table. If its not there, it is the all purpose 'T_CHAR'
         
-        $this->id = $this->singles[$uni] ?? $this->unknownId;
+        $this->id = $this->singles->_store[$uni] ?? $this->unknownId;
         
         $this->isSingle = ($this->id !== $this->unknownId);
         
@@ -228,7 +238,7 @@ class TokenStream
     private function loadNext() {
         if (!$this->lineAvailable())
             return; // may be available next call
-        foreach ($this->regex as $id => $pattern) {
+        foreach ($this->regex->_store as $id => $pattern) {
             if (preg_match($pattern, $this->curLine, $matches)) {
                 $this->applyMatch($id, $matches);
                 return;

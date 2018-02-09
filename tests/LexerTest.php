@@ -9,10 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml\tests;
+namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosymfony\Toml\Lexer;
+use Yosy\Toml\Lexer;
+
 
 class LexerTest extends TestCase
 {

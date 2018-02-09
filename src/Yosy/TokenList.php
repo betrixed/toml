@@ -1,13 +1,13 @@
 <?php
 
-namespace Yosymfony\Toml;
+namespace Yosy;
 /**
  * Description of TokenArray
  * Just enough to satisfy LexerText
  * @author Michael Rynn
  * 
  */
-class TokenArray
+class TokenList
 {
     protected $tokens;
     protected $ct;

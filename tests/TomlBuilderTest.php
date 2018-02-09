@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml\tests;
+namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosymfony\Toml\TomlBuilder;
-use Yosymfony\Toml\Toml;
+use Yosy\Toml\TomlBuilder;
+use Yosy\Toml\Toml;
 
 class TomlBuilderTest extends TestCase
 {

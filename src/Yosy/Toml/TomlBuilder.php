@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml;
+namespace Yosy\Toml;
 
-use Yosymfony\Toml\Exception\DumpException;
+use  Yosy\Toml\Exception\DumpException;
 
 /**
  * Create inline TOML strings.

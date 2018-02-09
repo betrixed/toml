@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Yosymfony\Toml package.
+ * This file is part of the Yosy\Toml package.
  *
  * (c) YoSymfony <http://github.com/yosymfony>
  *
@@ -9,11 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml\tests;
+namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosymfony\Toml\Parser;
-use Yosymfony\Toml\Lexer;
+use Yosy\Toml\Parser;
+use Yosy\Toml\Lexer;
+use Yosy\TokenStream;
 
 class ParserInvalidTest extends TestCase
 {
@@ -30,7 +31,7 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_EQUAL at line 1. Expected T_HASH or T_UNQUOTED_KEY
      */
     public function testKeyEmpty()
@@ -39,7 +40,7 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_HASH at line 1. Expected T_EQUAL
      */
     public function testParseMustFailWhenKeyHash()
@@ -48,7 +49,7 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_NEWLINE at line 1. Expected T_EQUAL
      */
     public function testParseMustFailWhenKeyNewline()
@@ -57,7 +58,7 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage The key "dupe" has already been defined previously.
      */
     public function testDuplicateKeys()
@@ -73,7 +74,7 @@ toml;
     /**
      * TOM04 spaces around '.' can be ignored, therefore space after a key name
      * isn't a problem, the problem is the first wrong character, the '='
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Unexpected '=' in path, Line 1
      */
     public function testParseMustFailWhenKeyOpenBracket()
@@ -82,7 +83,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_EOS at line 1. Unexpected token in parseKeyName
      */
     public function testParseMustFailWhenKeySingleOpenBracket()
@@ -91,7 +92,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'b' }.  Expected T_EQUAL
      */
     public function testParseMustFailWhenKeySpace()
@@ -100,7 +101,7 @@ toml;
     }
     /** TOM04 - White space around . is ignored, best practice is no white space, but
      * the fail problem is the '='
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Unexpected '=' in path, Line 2
      */
     public function testParseMustFailWhenKeyStartBracket()
@@ -110,7 +111,7 @@ toml;
 
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_EQUAL at line 1. Expected boolean, integer, long, string or datetime.
      */
     public function testParseMustFailWhenKeyTwoEquals()
@@ -119,7 +120,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'the' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenTextAfterInteger()
@@ -128,7 +129,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Invalid integer number: leading zeros are not allowed. Token: "T_INTEGER" line: 1 value { '042' }.
      */
     public function testParseMustFailWhenIntegerLeadingZeros()
@@ -137,7 +138,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { '_42' }.  Expected boolean, integer, long, string or datetime.
      */
     public function testParseMustFailWhenIntegerLeadingUnderscore()
@@ -146,7 +147,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Invalid integer number: underscore must be surrounded by at least one digit.
      */
     public function testParseMustFailWhenIntegerFinalUnderscore()
@@ -155,7 +156,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Invalid integer number: leading zeros are not allowed. Token: "T_INTEGER" line: 1 value { '0_42' }.
      */
     public function testParseMustFailWhenIntegerLeadingZerosWithUnderscore()
@@ -164,7 +165,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_DOT at line 1. Expected boolean, integer, long, string or datetime.
      */
     public function testParseMustFailWhenFloatNoLeadingZero()
@@ -178,7 +179,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_DOT at line 1. Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenFloatNoTrailingDigits()
@@ -192,7 +193,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { '_1' }.  Expected boolean, integer, long, string or datetime.
      */
     public function testParseMustFailWhenFloatLeadingUnderscore()
@@ -201,7 +202,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Invalid float number: underscore must be surrounded by at least one digit.
      */
     public function testParseMustFailWhenFloatFinalUnderscore()
@@ -210,7 +211,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Invalid float number: underscore must be surrounded by at least one digit.
      */
     public function testParseMustFailWhenFloatUnderscorePrefixE()
@@ -219,7 +220,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'e_6' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenFloatUnderscoreSuffixE()
@@ -228,7 +229,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_INTEGER at line 1 value { '-7' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedNoLeads()
@@ -237,7 +238,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'T17' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedNoSecs()
@@ -246,7 +247,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_INTEGER at line 1 value { '17' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedNoT()
@@ -255,7 +256,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_INTEGER at line 1 value { '-07' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedWithMilli()
@@ -264,7 +265,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_ESCAPE at line 1. This character is not valid.
      */
     public function testParseMustFailWhenBasicStringHasBadByteEscape()
@@ -273,7 +274,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_ESCAPE at line 1. This character is not valid.
      */
     public function testParseMustFailWhenBasicStringHasBadEscape()
@@ -282,7 +283,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_ESCAPE at line 1. This character is not valid.
      */
     public function testParseMustFailWhenBasicStringHasByteEscapes()
@@ -291,7 +292,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_EOS at line 1. This character is not valid.
      */
     public function testParseMustFailWhenBasicStringIsNotClose()
@@ -300,7 +301,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'No' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenThereIsTextAfterBasicString()
@@ -309,8 +310,8 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Array values already set to type 'integer', when type 'array' encountered
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Type object added to ValueList of integer
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesArraysAndInts()
     {
@@ -318,24 +319,24 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Array datatype already set to 'integer' when value 1.1 encountered
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Type double added to ValueList of integer
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesIntsAndFloats()
     {
         $this->parser->parse('ints-and-floats = [1, 1.1]');
     }
 /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Array datatype already set to 'float' when value 1 encountered
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Type integer added to ValueList of double
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesFloatAndInts()
     {
         $this->parser->parse('ints-and-floats = [1.1, 1]');
     }
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Array datatype already set to 'string' when value 42 encountered
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Type integer added to ValueList of string
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesStringsAndInts()
     {
@@ -343,7 +344,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 2 value { 'No' }.  Expected boolean, integer, long, string or datetime.
      */
     public function testParseMustFailWhenAppearsTextAfterArrayEntries()
@@ -359,7 +360,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 2 value { 'No' }.  Expected T_COMMA
      */
     public function testParseMustFailWhenAppearsTextBeforeArraySeparator()
@@ -375,7 +376,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage  Syntax error: unexpected token T_UNQUOTED_KEY at line 3 value { 'I' }.  Expected boolean, integer, long, string or datetime.
      */
     public function testParseMustFailWhenAppearsTextInArray()
@@ -391,8 +392,8 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage The key { fruit.type } has already been defined previously.
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Duplicate key path: fruit.type line 4
      */
     public function testParseMustFailWhenDuplicateKeyTable()
     {
@@ -408,8 +409,8 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Table path [a] at line 2 interferes with path at line 1
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Duplicate key path: [a] line 2
      */
     public function testParseMustFailWhenDuplicateTable()
     {
@@ -422,8 +423,8 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Path cannot be empty, Line 1
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Path cannot be empty at line 1
      */
     public function testParseMustFailWhenTableEmpty()
     {
@@ -432,7 +433,7 @@ toml;
 
     /**
      * TOM04 - expected a dot
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Expected a '.' after path key, Line 1
      */
     public function testParseMustFailWhenTableWhitespace()
@@ -441,7 +442,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Found '..' in path, Line 1
      */
     public function testParseMustFailWhenEmptyImplicitTable()
@@ -450,7 +451,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Unexpected '#' in path, Line 1
      */
     public function testParseMustFailWhenTableWithPound()
@@ -459,7 +460,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'this' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenTextAfterTable()
@@ -468,7 +469,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Expected a '.' after path key, Line 1
      */
     public function testParseMustFailWhenTableNestedBracketsOpen()
@@ -482,7 +483,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 'b' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenTableNestedBracketsClose()
@@ -495,7 +496,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage Syntax error: unexpected token T_NEWLINE at line 1. Unexpected token in parseKeyName
      */
     public function testParseMustFailWhenInlineTableWithNewline()
@@ -510,10 +511,10 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
-     * @expectedExceptionMessage Table path [fruit.variety] at line 8 interferes with path at line 4
+     * @expectedException Yosy\XArrayable
+     * @expectedExceptionMessage Path mismatch at fruit.variety line 8
      */
-    public function testParseMustFailWhenTableArrayWithSomeNameOfTable()
+    public function testParseMustFailWhenTableArrayWithSameNameOfTable()
     {
         $toml = <<<'toml'
         [[fruit]]
@@ -531,7 +532,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage AOT Segment cannot be empty, Line 1
      */
     public function testParseMustFailWhenTableArrayMalformedEmpty()
@@ -545,7 +546,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage New line in unfinished path, Line 1
      */
     public function testParseMustFailWhenTableArrayMalformedBracket()
@@ -559,7 +560,7 @@ toml;
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\SyntaxException
+     * @expectedException Yosy\XArrayable
      * @expectedExceptionMessage AOT Segment cannot be empty, Line 1
      */
     public function testParseAOTSegmentNoneEmpty()

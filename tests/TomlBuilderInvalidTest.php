@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Yosymfony\Toml package.
+ * This file is part of the Yosy\Toml package.
  *
  * (c) YoSymfony <http://github.com/yosymfony>
  *
@@ -9,15 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml\tests;
+namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosymfony\Toml\TomlBuilder;
+use Yosy\Toml\TomlBuilder;
 
 class TomlBuilderInvalidTest extends TestCase
 {
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testArrayMixedTypesArraysAndInts()
     {
@@ -28,7 +28,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testArrayMixedTypesIntsAndFloats()
     {
@@ -38,7 +38,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testArrayMixedTypesStringsAndInts()
     {
@@ -48,7 +48,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testDuplicateTable()
     {
@@ -59,7 +59,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testDuplicateKeyTable()
     {
@@ -71,7 +71,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testDuplicateKeys()
     {
@@ -82,7 +82,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testEmptyTable()
     {
@@ -92,7 +92,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testEmptyImplicitKeygroup()
     {
@@ -102,7 +102,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testInvalidKey()
     {
@@ -112,7 +112,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testNullValue()
     {
@@ -122,7 +122,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testTableArrayImplicit()
     {
@@ -135,7 +135,7 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosy\Toml\Exception\DumpException
      */
     public function testTableArrayWithSomeNameOfTable()
     {

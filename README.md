@@ -1,3 +1,32 @@
+This 'zephir-prep' branch is experimental, inspired by the discovery that Zephir does not do
+object references.
+
+The PHP toml implementations I have seen all used array reference (array& $aref) 
+to indicate place in array tree.
+The alternative, using wrapper PHP , which are references, adds indirection and loses a small amount of efficiency, but it 
+also enables the parse to construct an object tree, before a final toArray() conversion.
+The object tree may be useful as TOML tree object builder as well.
+
+Table and TableList objects
+=========================
+
+Zephir currently does not do reference operations, especially for arrays (&) 
+This implementation uses objects Table, TableList, and ValueList.
+Table uses the internal properties table of PHP objects.
+TableList implements array of Table.
+
+A toArray() method will have to serve to return a native PHP array representation. The object structure is likely to be similar to the nestable Phalcon\Config
+object, which is part of the zephir compiled Phalcon php-extension website framework.
+Phalcon\Config stores keyed properties in the PHP object. Read access to these has php-object property efficiency.
+As all keys of Phalcon\Config are represented as strings, per requirement of PHP object properties, TOML is okay with that.
+
+Array of Tables - AOT, needs an object
+---------------------------------------
+
+Phalcon\Config implements \ArrayAccess interface, on string object properties,
+ but this is not compatible with a numeric key index. Therefore another object class is required to mediate numeric
+key access, such that its \ArrayAccess interface uses a real PHP array, rather than the internal property table of the object.
+
 TOML parser for PHP
 ===================
 

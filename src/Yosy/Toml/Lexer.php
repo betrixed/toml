@@ -9,7 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml;
+namespace Yosy\Toml;
+
+use Yosy\TokenStream;
+use Yosy\KeyTable;
+use Yosy\TokenList;
 
 /**
  * Lexer for Toml strings.
@@ -138,16 +142,17 @@ class Lexer
      * Basic lexer testing of all regular expression parsing
      * {@inheritdoc}
      */
-    public function tokenize(string $input): TokenArray
+    public function tokenize(string $input): TokenList
     {
         // convert string into array of tokens
         // clone each from the stream
 
         $stream = new TokenStream();
-        $stream->setExpList(self::$Regex);
-        $stream->setSingles(self::$Singles);
+        $stream->setExpList(new KeyTable(self::$Regex));
+        $stream->setSingles(new KeyTable(self::$Singles));
         $stream->setUnknownId(Lexer::T_CHAR);
-
+        $stream->setNewLineId(Lexer::T_NEWLINE);
+        $stream->setEOSId(Lexer::T_EOS);
         $stream->setInput($input);
 
         $result = [];
@@ -157,7 +162,7 @@ class Lexer
         }
         $result[] = clone $stream->end();
 
-        return new TokenArray($result);
+        return new TokenList($result);
     }
 
     static public function tokenName(int $tokenId): string

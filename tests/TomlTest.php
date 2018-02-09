@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosymfony\Toml\tests;
+namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosymfony\Toml\Toml;
+use Yosy\Toml\Toml;
 
 class TomlTest extends TestCase
 {
@@ -64,7 +64,7 @@ class TomlTest extends TestCase
     }
 
     /**
-     * @expectedException Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosy\Toml\Exception\ParseException
      */
     public function testParseFileMustFailWhenFilenameDoesNotExists()
     {
