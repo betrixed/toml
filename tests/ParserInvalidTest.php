@@ -32,7 +32,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_EQUAL at line 1. Expected T_HASH or T_UNQUOTED_KEY
+     * @expectedExceptionMessage Syntax error: unexpected token T_EQUAL at line 1. Expect Key = , [Path] or # Comment
      */
     public function testKeyEmpty()
     {
@@ -59,7 +59,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage The key "dupe" has already been defined previously.
+     * @expectedExceptionMessage The key { dupe } has already been defined previously.
      */
     public function testDuplicateKeys()
     {
@@ -393,7 +393,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Duplicate key path: fruit.type line 4
+     * @expectedExceptionMessage Duplicate key path: {fruit}.type line 4
      */
     public function testParseMustFailWhenDuplicateKeyTable()
     {
@@ -410,7 +410,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Duplicate key path: [a] line 2
+     * @expectedExceptionMessage Duplicate key path: [{a}] line 2
      */
     public function testParseMustFailWhenDuplicateTable()
     {
@@ -512,7 +512,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Path mismatch at fruit.variety line 8
+     * @expectedExceptionMessage Table path mismatch with [fruit][variety] line 8
      */
     public function testParseMustFailWhenTableArrayWithSameNameOfTable()
     {

@@ -29,7 +29,17 @@ class TableList extends Arrayable {
             $this->_list = $arrayOfTable;
         }
     }
-
+    /** 
+     * return offset to last Table *
+     * @return int
+     */
+    public function getEndIndex() : int {
+        return count($this->_list)-1;
+    }
+    /**
+     * Return last Table object
+     * @return \Yosy\Table
+     */
     public function getEndTable() : Table {
         return $this->_list[count($this->_list)-1];
     }

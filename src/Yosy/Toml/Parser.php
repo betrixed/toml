@@ -8,7 +8,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  * 
- * AOT - AOTRef additions and  modifications by Michael Rynn <https://github.com/betrixed/toml>
+ *  Michael Rynn <https://github.com/betrixed/toml>
+ *  Modified as preparation for attempt at Zephir Version. 
  */
 
 namespace Yosy\Toml;
@@ -26,11 +27,17 @@ use Yosy\XArrayable;
  */
 class PartTag
 {
-
-    public $isAOT; // path parsed as AOT this time
-    public $objAOT; // object known to be AOT
+    public $partKey; // String key part
+    public $isAOT; // Update in parse for TOM04 checks
+    public $objAOT; // true for TableList, false for Table
     public $implicit; // implicit flag
-
+    
+    public function __construct($key, $objAOT) {
+        $this->partKey = $key;
+        $this->isAOT = $objAOT;
+        $this->objAOT = $objAOT;
+        $this->implicit = false;
+    }
 }
 
 /**
@@ -45,37 +52,25 @@ class Parser
     private $useKeyStore = false;
     private $keys = []; //usage controlled by $useKeyStore
     private $currentKeyPrefix = ''; //usage controlled by $useKeyStore
-    // array context for key = value
-    // parsed result to return
+
     private $root; // root Table object
-    // path string to array context for key = value
-    // by convention, is either empty , or set with
-    // terminator of '.'
-    // 
     private $table; // dyanamic reference to current Table object
-    // array of all AOTRef using base name string key
-    private $refAOT = []; // deprecating this version now
-    //
-    private $allPaths = [];  // blend of all registered table paths
-    private $pathFull = null;  // instance of last fully specificied path
-    // remenber table paths created in passing
-    private $implicitTables = []; // array[string] of bool
-    public $briefExpressions = [];  // populate from Lexer
 
     // consts for parser expression tables
-
     const E_BRIEF = 0;
     const E_FULL = 1;
     const E_LSTRING = 2;
     const E_BSTRING = 3;
 
-    private $ts; // so don't need to pass it around all the time
-    private $valueStruct;
-    //
-    // current expression table type, and stack of previous
+    // For regex table stack
+    private $ts; 
+
+    // Current regex table type
     private $expSetId;
+    // Stack of regex types.
     private $expStack = [];
     // key value parse
+    public $briefExpressions = [];  
     public $fullExpressions = [];
     public $basicString = [];
     public $literalString = [];
@@ -162,12 +157,6 @@ class Parser
         $this->ts = $ts; // setExpSet requires this
         // point to the base regexp array
         $this->setExpSet(Parser::E_BRIEF);
-
-        $this->valueStruct = new class() {
-
-            public $value;
-            public $type;
-        };
     }
 
     /**
@@ -213,29 +202,15 @@ class Parser
     }
 
     /**
-     * {@inheritdoc}
+     * Process all tokens until T_EOS
+     * @param TokenStream $ts
      */
-    protected function implementation(TokenStream $ts)
+    private function implementation(TokenStream $ts): void
     {
-        try {
-            $this->resetWorkArrayToResultArray();
-
-
-            $this->processExpressions($ts);
-        } finally {
-            foreach ($this->refAOT as $key => $value) {
-                $value->unlink();
-            }
+        if ($this->useKeyStore) {
+            $this->currentKeyPrefix = '';
         }
-    }
-
-    /**
-     * Process an expression
-     *
-     * @param TokenStream $ts The token stream
-     */
-    private function processExpressions(TokenStream $ts): void
-    {
+        $this->table = $this->root;
         $tokenId = $ts->moveNextId();
         while ($tokenId !== Lexer::T_EOS) {
             //$tokenName = Lexer::tokenName($tokenId);
@@ -258,19 +233,12 @@ class Parser
                     $tokenId = $ts->moveNextId();
                     break;
                 default:
-                    //TODO: This message is probably outdated by now
-                    // Not general enougy, probably to match test cases.
-                    $msg = 'Expected T_HASH or T_UNQUOTED_KEY';
-                    $this->unexpectedTokenError($ts->getToken(), $msg);
+                    $this->unexpectedTokenError($ts->getToken(), 'Expect Key = , [Path] or # Comment' );
                     break;
             }
         }
     }
 
-    private function duplicateKey(string $keyName)
-    {
-        $this->syntaxError("The key \"$keyName\" has already been defined previously.");
-    }
 
     /** 
      * Skip comment, and return next none-comment token or NEWLINE or EOS
@@ -315,7 +283,7 @@ class Parser
             $this->mustBeUnique($this->currentKeyPrefix . $keyName);
         } else {
             if ($this->table->offsetExists($keyName)) {
-                $this->duplicateKey($keyName);
+                $this->errorUniqueKey($keyName);
             }
         }
 
@@ -339,7 +307,7 @@ class Parser
         } elseif ($tokenId === Lexer::T_LEFT_CURLY_BRACE) {
             $this->parseInlineTable($ts, $keyName);
         } else {
-            $this->table[$keyName] = $this->parseSimpleValue($ts)->value;
+            $this->table[$keyName] = $this->parseSimpleValue($ts);
         }
         $this->popExpSet();
         $tokenId = $ts->moveNextId(); // clear value parse ends
@@ -376,46 +344,29 @@ class Parser
     {
         // reuse same instance
         $token = $ts->getTokenId();
-        $v = $this->valueStruct;
+        
         switch ($token) {
             case Lexer::T_BOOLEAN:
-                $v->value = $this->parseBoolean($ts);
-                $v->type = 'boolean';
-                break;
+                return $this->parseBoolean($ts);
             case Lexer::T_INTEGER:
-                $v->value = $this->parseInteger($ts);
-                $v->type = 'integer';
-                break;
+                return $this->parseInteger($ts);
             case Lexer::T_FLOAT:
-                $v->value = $this->parseFloat($ts);
-                $v->type = 'float';
-                break;
+                return $this->parseFloat($ts);
             case Lexer::T_QUOTATION_MARK:
-                $v->value = $this->parseBasicString($ts);
-                $v->type = 'string';
-                break;
+                return $this->parseBasicString($ts);
             case Lexer::T_3_QUOTATION_MARK:
-                $v->value = $this->parseMultilineBasicString($ts);
-                $v->type = 'string';
-                break;
+                return $this->parseMultilineBasicString($ts);
             case Lexer::T_APOSTROPHE:
-                $v->value = $this->parseLiteralString($ts);
-                $v->type = 'string';
-                break;
+                return $this->parseLiteralString($ts);
             case Lexer::T_3_APOSTROPHE:
-                $v->value = $this->parseMultilineLiteralString($ts);
-                $v->type = 'string';
-                break;
+                return $this->parseMultilineLiteralString($ts);
             case Lexer::T_DATE_TIME:
-                $v->value = $this->parseDatetime($ts);
-                $v->type = 'datetime';
-                break;
+                return $this->parseDatetime($ts);
             default:
                 $this->unexpectedTokenError($ts->getToken(), 'Expected boolean, integer, long, string or datetime.'
                 );
                 break;
         }
-        return $v;
     }
 
     private function parseBoolean(TokenStream $ts): bool
@@ -678,7 +629,7 @@ class Parser
                 $result[] = $this->parseArray($ts);
             } else {
                 // Returned value is a singular class instance to pass parameters
-                $result[] = $this->parseSimpleValue($ts)->value;
+                $result[] = $this->parseSimpleValue($ts);
             }
             $tokenId = $ts->moveNextId();
             while ($tokenId === Lexer::T_SPACE || $tokenId === Lexer::T_NEWLINE) {
@@ -828,6 +779,35 @@ class Parser
     }
 
     /**
+     * From array of Table/TableList generate its key path
+     * using the object tags
+     * @param array of parts
+     * @return string
+     */
+    private function getPathName(array $parts, bool $withIndex = true) : string {
+        $result = '';
+        foreach($parts as $idx => $p) {
+            $tag = $p->getTag();
+            if ($tag->objAOT) {
+                 $bit = '[' . $tag->partKey;
+                 if ($withIndex) {
+                     $bit .= '/' . $p->getEndIndex();
+                 }
+                 $bit .= ']';
+            }
+            else {
+                $bit = '{' . $tag->partKey . '}';
+            }
+            if ($idx===0) {
+                $result = $bit;
+            }
+            else {
+                $result .= $bit;
+            }
+        }
+        return $result;
+    }
+    /**
      * Convert the path string, into the array with the path of
      * Table and TableList objects indicated.
      * @param TokenStream $ts
@@ -837,10 +817,7 @@ class Parser
         $isAOT = false;
         $parts = []; // collect the objects
         $partsCt = 0;
-        $partName = ''; // collect the path string
         $dotCount = 0;
-        $hasAOT = false;
-        $hasTables = false;
         $AOTLength = 0;
         $pobj = $this->root;
         $hitNew = false;
@@ -906,55 +883,42 @@ class Parser
                 case Lexer::T_QUOTATION_MARK:
                 default:
                     $partKey = $this->parseKeyName($ts);
-                    $pathSep = $partsCt > 0 ? '.' : '';
-
-                    if (!$isAOT) {
-                        $hasTables = true;
-                        $section = $partKey;
-                    } else {
-                        $section = '[' . $partKey . ']';
-                        $hasAOT = true;
-                        $AOTLength++;
-                    }
                     if ($dotCount < 1 && count($parts) > 0) {
                         $this->tablePathError("Expected a '.' after path key", $ts->getToken());
                     }
                     $dotCount = 0;
-                    // do we have everything we need to know?
-                    $partName .= $pathSep . $section;
-
-                    // does this object exist already?
                     $testObj = $pobj->offsetExists($partKey) ? $pobj[$partKey] : null;
                     if (is_null($testObj)) {
+                        // create object and tags
                         if (!$hitNew) {
                             $hitNew = true;
                             $firstNew = $partsCt;
                         }
-                        $tag = new PartTag();
-                        $tag->isAOT = $isAOT;
-
+                        $tag = new PartTag($partKey, $isAOT);
                         if ($isAOT) {
+                            $AOTLength++;
                             $testObj = new TableList();
                             // store TableList as part
                             $pobj[$partKey] = $testObj;
                             $pobj = $testObj->getEndTable();
-                            $tag->objAOT = true;
                         } else {
                             $testObj = new Table();
                             $pobj[$partKey] = $testObj;
                             $pobj = $testObj;
-                            $tag->objAOT = false;
                         }
                         $testObj->setTag($tag);
                     } else {
-                        // path exists, must be Arrayable
+                        // Must be Arrayable, had all parts so far
                         $preMade = ($testObj instanceof \Yosy\Arrayable);
                         if (!$preMade) {
-                            throw new XArrayable('Duplicate key path: ' . $partName . ' line ' . $pathToken->line);
+                            $path = $this->getPathName($parts) . '.' . $partKey;
+                            throw new XArrayable('Duplicate key path: ' . $path . ' line ' . $pathToken->line);
                         }
                         $tag = $testObj->getTag();
-                        $tag->isAOT = $isAOT;
-                        if ($tag->objAOT) {
+                        $tag->isAOT = $isAOT; 
+                        // TOM04 allows path inconsistancy, isAOT ?? objAOT 
+                        if ($tag->objAOT) { 
+                            $AOTLength++;
                             $pobj = $testObj->getEndTable();
                         } else { // found a Table object
                             $pobj = $testObj;
@@ -962,21 +926,25 @@ class Parser
                     }
                     $parts[] = $testObj; // Table or TableList
                     $partsCt++;
+                    // because TOM04 allows for path inconsistany
+                    // 
+                    
                     $tokenId = $ts->moveNextId();
                     break;
             }
         }
-        if (!$hasTables && !$hasAOT) {
+        // check the rules
+        if (count($parts) == 0) {
             $this->tablePathError('Table path cannot be empty at line ' . $pathToken->line);
         }
-
+       
         if (!$hitNew) {
             $tag = $testObj->getTag();
             if ($tag->objAOT) {
                 if ($tag->isAOT) {
                     $pobj = $testObj->newTable();
                 } else {
-                    throw new XArrayable('Path mismatch at ' . $partName . ' line ' . $pathToken->line);
+                    throw new XArrayable('Table path mismatch with ' . $this->getPathName($parts,false) . ' line ' . $pathToken->line);
                 }
             } else {
                 // terminates in reused table name?
@@ -985,7 +953,7 @@ class Parser
                     // last part no longer implicit
                     $tag->implicit = false;
                 } else {
-                    throw new XArrayable('Duplicate key path: [' . $partName . '] line ' . $pathToken->line);
+                    throw new XArrayable('Duplicate key path: [' . $this->getPathName($parts,false) . '] line ' . $pathToken->line);
                 }
             }
         } else {
@@ -999,7 +967,7 @@ class Parser
         }
 
         $this->table = $pobj;
-        $this->currentKeyPrefix = $partName;
+        $this->currentKeyPrefix = $this->getPathName($parts);
     }
 
     /**
@@ -1100,13 +1068,6 @@ class Parser
         return true;
     }
 
-    private function resetWorkArrayToResultArray(): void
-    {
-        if ($this->useKeyStore) {
-            $this->currentKeyPrefix = '';
-        }
-        $this->table = $this->root;
-    }
 
     private function unexpectedTokenError(Token $token, string $expectedMsg): void
     {
