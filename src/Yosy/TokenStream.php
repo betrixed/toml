@@ -18,235 +18,191 @@ use Yosy\Lexer;
  */
 class TokenStream
 {
-    public $lines; // all lines
-    public $lineCount;
-    
-    public $curLine;
-    public $id;
-    public $value;
-    public $lineNo;    // line number of curLine
-    public $tokenLine;  // line number of current token
-    public $isSingle; // was found in single character list
 
-    public $offset; // unparsed offset on current line
-    public $regex; // Object of type KeyTable to current set of tokens being searched for
-    public $singles; // Reference to single character lookup for tokenId
-    public $unknownId; // int value to represent single character not in singles.
-    public $newLineId; //
-    public $eosId;
-    public $token;  // The one and only token instance
+    protected $lines; // all lines
+    protected $lineCount;
+    protected $curLine;
+    protected $id;
+    protected $value;
+    protected $lineNo;    // line number of curLine
+    protected $tokenLine;  // line number of current token
+    protected $isSingle; // was found in single character list
+    protected $offset; // unparsed offset on current line
+    protected $regex; // Object of type KeyTable to current set of tokens being searched for
+    protected $singles; // Reference to single character lookup for tokenId
+    protected $unknownId; // int value to represent single character not in singles.
+    protected $newLineId; //
+    protected $eosId;
+    protected $token;  // The one and only token instance
+
     // topLevel parse
-    
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->token = new Token();
     }
-    public function setEOSId(int $id) {
+
+    /**
+     * Token id to be returned if no more text is available
+     * @param int $id
+     */
+    public function setEOSId(int $id)
+    {
         $this->eosId = $id;
-    }    
-    public function setNewLineId(int $id) {
+    }
+    /**
+     * Token id to be returned if newline character is parsed
+     * @param int $id
+     */
+    public function setNewLineId(int $id)
+    {
         $this->newLineId = $id;
     }
+
+    /** The unknown id is returned if no match in 
+     *  the Singles character table.
+     * @param int $id
+     */
     public function setUnknownId(int $id)
     {
         $this->unknownId = $id;
     }
+
     /**
      * Argument is reference to associative array[int] of string regular expressions
      * @param array $ref
      */
-    public function setExpList(KeyTable $ref) {
+    public function setExpList(KeyTable $ref)
+    {
         $this->regex = $ref;
     }
-    /** 
+
+    /**
      * For lookup of tokenId of single character string
      * Argument is reference to associative array[string] of int 
      * @param array $ref
      */
-    
-    public function setSingles(KeyTable $ref) {
+    public function setSingles(KeyTable $ref)
+    {
         $this->singles = $ref;
     }
-     public function setInput(string $input)
-     {
+
+    public function setInput(string $input)
+    {
         $boxme = new Box(explode("\n", $input));
         $this->setLines($boxme);
-     }
-    /**
-     * Apply a successful expression match to update token and text parse state
-     * @param int $id
-     * @param array $mval
-     */
-    private function applyMatch(int $id, array & $mval) : void {
-        $this->value = $mval[1];
-        $this->id = $id;
-        $this->isSingle = false;
-        $this->line = $this->tokenLine;
-        
-        $takeOff = strlen($mval[0]);
-        $this->offset += $takeOff;
-        $this->curLine = substr($this->curLine,$takeOff);
     }
-                    
-    /** Find a match amoung a list of TokenIds 
-     *  Since T_NEWLINE & T_EOS are always implicit
-     *  in text processing, they are always implicitly
-     *  returnable as a value.
-     *  Lexer is likely not to have them as a regular expression,
-     *  @param array& $idList Array of token ids, except for NEWLINE & EOS
-     *  @return $tokenId - what was found,
-     *   parse point was moved forwards
-     *  @return 0  -  no match, parse point is stuck.
-     */
-    public function matchNextAny(array& $idList) : int {
-        foreach($idList as $id) {
-            $realMatch = $this->matchNext($id);
-            if ($realMatch !== 0) {
-                return $realMatch;
-            }
-        }
-        return 0; 
-    }
-    /** 
-     * This uses the current set of regular expressions
-     * @param int $id
-     * @return int  Same as $id passed, or NEWLINE or EOS, or 0
-     */
-    public function matchNext(int $id) : int {
-        if (!$this->lineAvailable()) {
-            /** hopefully NEWLINE or EOS */ 
-            // return whatever we got, 
-            // which may or may not be in the explicit list
-            return $this->id; 
-        }
-        $pattern = $this->regex->_store[$id];
-        if (preg_match($pattern, $this->curLine, $matches)) {
-            $this->applyMatch($id, $matches);
-            return $id;
-        }
 
-        return 0; 
-    }
-    /** 
-     * $idList must not contain NEWLINE or EOS.
-     * Last token id could be either, or whatever stopped the skipping.
-     * @param array $idList Reference to list of token ids
-     * @return int  Count of matches found in $idList
-     */
-    public function skipWhileAny(array& $idList) : int {
-        $skip = 0;
-        while (true) {
-           $nextId = $this->matchNextAny($idList);
-           if ($nextId !== $this->newLineId && $nextId !== $this->eosId) {
-                $skip++; // was a text parse match
-           }
-           else {
-               break;
-           }
-        } 
-        return $skip;
-    }
-    public function hasPendingTokens() : bool {
+    public function hasPendingTokens(): bool
+    {
         return ($this->id !== $this->eosId);
     }
-    public function moveNext() : Token {
-        $token = $this->token;
-        $token->set($this->value, $this->id, $this->tokenLine, $this->isSingle);
-        $this->loadNext();
-        return $token;
-    }
-    
-    public function end() : Token {
-        $token = $this->token;
-        $token->set($this->value, $this->id, $this->tokenLine, $this->isSingle);
-        return $token;
-    }
+
     /**
-     * Return the current token value, do next parse step
-     * @return string
+     * Get all token details of parse step
+     * @return \Yosy\Token
      */
-    public function valueMove() : string {
-        $value = $this->value;
-        $this->loadNext();
-        return $value;
-    }
-    /** 
-     * Don't care about token, value, 
-     */
-    public function movePeekNext() {
-        $this->loadNext();
-        return $this->id;
-    }
-    
-    public function peekNext() : int {
-        return $this->id;
+    public function getToken(): Token
+    {
+        $token = $this->token;
+        $token->set($this->value, $this->id, $this->tokenLine, $this->isSingle);
+        return $token;
     }
 
-    public function setLines(Box $lines) {
+
+    /**
+     * Return the current parse step value
+     * @return string
+     */
+    public function getValue(): string
+    {
+        return $this->value;
+    }
+
+    /** 
+     * Advance the parse then return the internal token id.
+     */
+    public function moveNextId(): int
+    {
+        return $this->parseNextId($this->regex);
+    }
+/** 
+     * Advance the parse then return the internal token id.
+     */
+    public function getTokenId(): int
+    {
+        return $this->id;
+    }
+    /** 
+      * This sets the parse state to before the first line.
+      * To get the first token, call moveNextId
+      */
+    public function setLines(Box $lines)
+    {
         $this->lines = $lines;
         $this->lineNo = 0;
         $this->offset = 0;
         $this->lineCount = count($lines->_me);
         $this->curLine = ($this->lineCount > 0) ? $lines->_me[0] : null;
-        $this->loadNext();
     }
-    
+
     /**
-     * @return true if text to parse in $this->curLine
-     * @return false if sets the token values to NEWLINE or EOS
+     * Set up the internal current token values, from the current parse
+     * position in the line, and move the parse position to the next. Return
+     * a token id.
+     * Returned token id may be a NEWLINE or EOS, before the
+     * $patterns are checked. If neither NEWLINE, EOS, or any of the 
+     * $patterns match, the next unicode character is checked against the
+     * assigned Singles table, and its token id is returned, or else
+     * the character value is assigned the UnknownId
+     * @param \Yosy\KeyTable $patterns
+     * @return int
      */
-    private function lineAvailable() : bool {
+    public function parseNextId(KeyTable $patterns) : int
+    {
         if (empty($this->curLine)) {
             $nextLine = $this->lineNo + 1;
             if ($nextLine < $this->lineCount) {
-               $this->curLine = $this->lines->_me[$nextLine];
-               $this->offset = 0;
-               $this->value = "\n";
-               $this->id = $this->newLineId;
-               $this->lineNo = $nextLine;
-            }
-            else {
-               $this->value = "";
-               $this->id = $this->eosId;
+                $this->curLine = $this->lines->_me[$nextLine];
+                $this->offset = 0;
+                $this->value = "\n";
+                $this->id = $this->newLineId;
+                $this->lineNo = $nextLine;
+            } else {
+                $this->value = "";
+                $this->id = $this->eosId;
             }
             $this->isSingle = true; // really
-            return false;
-        }
-        elseif ($this->offset === 0) {
+            return $this->id;
+        } elseif ($this->offset === 0) {
             $this->tokenLine = $this->lineNo + 1;
         }
-        return true;
-    }
-    
-    private function unicode() : void {
-        // get next unicode character using mb_substr,
-        // then chop this using substr
-        $uni = mb_substr($this->curLine,0,1);
-        $takeoff = strlen($uni);
-        $this->offset += $takeoff; 
-        $this->curLine = substr($this->curLine,$takeoff);
-        $this->value = $uni;
-        
-        // There are a lot of single character lexer Ids, so just look
-        // them up in a table. If its not there, it is the all purpose 'T_CHAR'
-        
-        $this->id = $this->singles->_store[$uni] ?? $this->unknownId;
-        
-        $this->isSingle = ($this->id !== $this->unknownId);
-        
-    }
-    private function loadNext() {
-        if (!$this->lineAvailable())
-            return; // may be available next call
-        foreach ($this->regex->_store as $id => $pattern) {
+
+        foreach ($patterns->_store as $id => $pattern) {
             if (preg_match($pattern, $this->curLine, $matches)) {
-                $this->applyMatch($id, $matches);
-                return;
+                $this->id = $id;
+                $this->value = $matches[1];
+                $this->isSingle = false;
+                $this->line = $this->tokenLine;
+                $takeOff = strlen($matches[0]);
+                $this->offset += $takeOff;
+                $this->curLine = substr($this->curLine, $takeOff);
+                return $this->id;
             }
         }
         // no expressions matched, as a default, classify unicode character
-        $this->unicode();
+        $uni = mb_substr($this->curLine, 0, 1);
+        $takeoff = strlen($uni);
+        $this->offset += $takeoff;
+        $this->curLine = substr($this->curLine, $takeoff);
+        $this->value = $uni;
 
-        return;
+        // There are a lot of single character lexer Ids, so just look
+        // them up in a table. If its not there, it is the all purpose 'T_CHAR'
+
+        $this->id = $this->singles->_store[$uni] ?? $this->unknownId;
+        $this->isSingle = ($this->id !== $this->unknownId);
+        return $this->id;
     }
+
 }

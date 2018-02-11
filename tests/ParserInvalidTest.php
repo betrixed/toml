@@ -84,7 +84,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_EOS at line 1. Unexpected token in parseKeyName
+     * @expectedExceptionMessage Table path cannot be empty at line 1
      */
     public function testParseMustFailWhenKeySingleOpenBracket()
     {
@@ -230,7 +230,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_INTEGER at line 1 value { '-7' }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { '-7-05T17' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedNoLeads()
     {
@@ -248,7 +248,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_INTEGER at line 1 value { '17' }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { '17' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedNoT()
     {
@@ -257,7 +257,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_INTEGER at line 1 value { '-07' }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { '-07-5T17' }.  Expected T_NEWLINE or T_EOS.
      */
     public function testParseMustFailWhenDatetimeMalformedWithMilli()
     {
@@ -361,7 +361,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 2 value { 'No' }.  Expected T_COMMA
+     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 2 value { 'No' }.  Expect '.' or ']' after array item
      */
     public function testParseMustFailWhenAppearsTextBeforeArraySeparator()
     {
@@ -424,7 +424,7 @@ toml;
 
     /**
      * @expectedException Yosy\XArrayable
-     * @expectedExceptionMessage Path cannot be empty at line 1
+     * @expectedExceptionMessage Table path cannot be empty at line 1
      */
     public function testParseMustFailWhenTableEmpty()
     {

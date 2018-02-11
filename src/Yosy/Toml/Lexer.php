@@ -157,11 +157,10 @@ class Lexer
 
         $result = [];
 
-        while ($stream->hasPendingTokens()) {
-            $result[] = clone $stream->moveNext();
+        while ($stream->moveNextId() !== Lexer::T_EOS) {
+            $result[] = clone $stream->getToken();
         }
-        $result[] = clone $stream->end();
-
+        $result[] = clone $stream->getToken();
         return new TokenList($result);
     }
 
