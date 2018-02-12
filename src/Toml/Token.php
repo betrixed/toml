@@ -7,7 +7,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Yosy;
+namespace Toml;
 
 /** 
  * Useful to pass around values,

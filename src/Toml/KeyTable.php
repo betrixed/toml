@@ -1,29 +1,13 @@
 <?php
-
-/*
- * @author Michael Rynn
- */
-
 /**
- * Description of Table
- * This is almost exactly like Phalcon\Config.
- * The original zephir config.zep source was directly reimplemented in php.
- * There is an added callback for value transformation in the offsetSet method.
- * This was originally used for Lookup of ${name} for substitution by a PHP defined(name) value,
- * useful for filename paths.
- * I found it simpler to just iterate and substitute after initial read
- * , and this abolished a  need to reimplement Phalcon\Config
- * 
  * @author Michael Rynn
  */
 
-namespace Yosy;
-
+namespace Toml;
 /**
  * This is more general, no frills, object wrap of a PHP array
  * It is more inefficient than a bare PHP array.
- * Because almost anything goes here, let the internal $_store be public
- * for easy iteration.
+ * The internal $_store is public for easy iteration.
  * Any PHP key type is allowed. 
  * Aim is to have a "referenced" array as object without a reference operator &
  */
@@ -92,7 +76,7 @@ class KeyTable extends Arrayable
     {
         $arrayConfig = [];
         foreach ($this->_store as $key => $value) {
-            if ($recurse && is_object($value) && ($value instanceof \Yosy\Arrayable)) {
+            if ($recurse && is_object($value) && ($value instanceof \Toml\Arrayable)) {
                 $arrayConfig[$key] = $value->toArray();
             } else {
                 $arrayConfig[$key] = $value;
@@ -112,7 +96,7 @@ class KeyTable extends Arrayable
         }
 
         foreach (get_object_vars($this) as $key => $value) {
-            if (is_object($value) && (is_a($value, '\Yosy\KeyTable'))) {
+            if (is_object($value) && (is_a($value, '\Toml\KeyTable'))) {
                 $value->treeIterateValues($callback);
             } else {
                 $this->_store[$key] = \call_user_func($callback, $value);
@@ -128,9 +112,9 @@ class KeyTable extends Arrayable
     /**
      * Merge values in $config, into the properties of $instance
      * TableList objects are added together.
-     * @param \Yosy\KeyTable $config
-     * @param \Yosy\KeyTable  $instance
-     * @return \Yosy\KeyTable 
+     * @param \Toml\KeyTable $config
+     * @param \Toml\KeyTable  $instance
+     * @return \Toml\KeyTable 
      */
     protected final function _merge(KeyTable $config, KeyTable $instance = null): KeyTable
     {
@@ -143,7 +127,7 @@ class KeyTable extends Arrayable
 
             if (is_object($localObject)) {
                 // Are both objects Mergeable ? 
-                if (($localObject instanceof \Yosy\KeyTable) && is_object($value) && ($value instanceof \Yosy\KeyTable)) {
+                if (($localObject instanceof \Toml\KeyTable) && is_object($value) && ($value instanceof \Toml\KeyTable)) {
                     $this->_merge($value, $localObject);
                     continue;
                 }

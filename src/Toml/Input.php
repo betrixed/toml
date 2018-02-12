@@ -9,17 +9,17 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosy\Toml;
+namespace Toml;
 
-use Yosy\XArrayable;
-use Yosy\Toml\Exception\ParseException;
+use XArrayable;
+use Toml\Exception\ParseException;
 
 /**
  * Parser for TOML format.
  *
  * @author Victor Puertas <vpgugr@vpgugr.com>
  */
-class Toml
+class Input
 {
     /**
      * Parses TOML into a PHP array.

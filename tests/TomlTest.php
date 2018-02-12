@@ -12,13 +12,13 @@
 namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosy\Toml\Toml;
+use Toml\Input;
 
 class TomlTest extends TestCase
 {
     public function testParseMustParseAString()
     {
-        $array = Toml::parse('data = "question"');
+        $array = Input::parse('data = "question"');
 
         $this->assertEquals([
             'data' => 'question',
@@ -27,7 +27,7 @@ class TomlTest extends TestCase
 
     public function testParseMustReturnEmptyArrayWhenStringEmpty()
     {
-        $array = Toml::parse('');
+        $array = Input::parse('');
 
         $this->assertNull($array);
     }
@@ -36,7 +36,7 @@ class TomlTest extends TestCase
     {
         $filename = __DIR__.'/fixtures/simple.toml';
 
-        $array = Toml::parseFile($filename);
+        $array = Input::parseFile($filename);
 
         $this->assertEquals([
             'name' => 'Víctor',
@@ -45,7 +45,7 @@ class TomlTest extends TestCase
 
     public function testParseMustReturnAnObjectWhenArgumentResultAsObjectIsTrue()
     {
-        $actual = Toml::parse('name = "Víctor"', true);
+        $actual = Input::parse('name = "Víctor"', true);
         $expected = new \stdClass();
         $expected->name = 'Víctor';
 
@@ -56,7 +56,7 @@ class TomlTest extends TestCase
     {
         $filename = __DIR__.'/fixtures/simple.toml';
 
-        $actual = Toml::parseFile($filename, true);
+        $actual = Input::parseFile($filename, true);
         $expected = new \stdClass();
         $expected->name = 'Víctor';
 
@@ -64,12 +64,12 @@ class TomlTest extends TestCase
     }
 
     /**
-     * @expectedException Yosy\Toml\Exception\ParseException
+     * @expectedException Toml\Exception\ParseException
      */
     public function testParseFileMustFailWhenFilenameDoesNotExists()
     {
         $filename = __DIR__.'/fixtures/does-not-exists.toml';
 
-        Toml::parseFile($filename);
+        Input::parseFile($filename);
     }
 }

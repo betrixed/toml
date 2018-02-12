@@ -12,7 +12,7 @@
 namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosy\Toml\Lexer;
+use Toml\Lexer;
 
 
 class LexerTest extends TestCase

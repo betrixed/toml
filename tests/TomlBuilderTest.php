@@ -12,8 +12,8 @@
 namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosy\Toml\TomlBuilder;
-use Yosy\Toml\Toml;
+use Toml\TomlBuilder;
+use Toml\Input;
 
 class TomlBuilderTest extends TestCase
 {
@@ -44,7 +44,7 @@ class TomlBuilderTest extends TestCase
                 ->addValue('multiple', array(array(1, 2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array(new \Datetime())))
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testArrayEmpty()
@@ -55,7 +55,7 @@ class TomlBuilderTest extends TestCase
             ->addValue('thevoid', array())
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testImplicitAndExplicitAfter()
@@ -68,7 +68,7 @@ class TomlBuilderTest extends TestCase
                 ->addValue('better', 43)
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testImplicitAndExplicitBefore()
@@ -81,7 +81,7 @@ class TomlBuilderTest extends TestCase
                 ->addValue('answer', 42)
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testTableEmpty()
@@ -91,7 +91,7 @@ class TomlBuilderTest extends TestCase
         $result = $tb->addTable('a')
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testTableSubEmpty()
@@ -102,7 +102,7 @@ class TomlBuilderTest extends TestCase
             ->addTable('a.b')
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testKeyWhitespace()
@@ -112,7 +112,7 @@ class TomlBuilderTest extends TestCase
         $result = $tb->addValue('valid key', 2)
             ->getTomlString();
             
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testTableWhitespace()
@@ -122,7 +122,7 @@ class TomlBuilderTest extends TestCase
         $result = $tb->addTable('valid key')
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testStringEscapesDoubleQuote()
@@ -139,7 +139,7 @@ class TomlBuilderTest extends TestCase
             ->addValue('backslash', 'This string has a \\ backslash character.')
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testKeyLiteralString()
@@ -149,7 +149,7 @@ class TomlBuilderTest extends TestCase
         $result = $tb->addValue('regex', "@<\i\c*\s*>")
             ->getTomlString();
 
-        $array = Toml::Parse($result);
+        $array = Input::Parse($result);
 
         $this->assertNotNull($array);
 
@@ -163,7 +163,7 @@ class TomlBuilderTest extends TestCase
         $result = $tb->addValue('regex', "@@<\i\c*\s*>")
             ->getTomlString();
 
-        $array = Toml::Parse($result);
+        $array = Input::Parse($result);
 
         $this->assertNotNull($array);
 
@@ -177,7 +177,7 @@ class TomlBuilderTest extends TestCase
         $result = $tb->addValue('~!@$^&*()_+-`1234567890[]|/?><.,;:\'', 1)
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testStringEscapesSingleQuote()
@@ -194,7 +194,7 @@ class TomlBuilderTest extends TestCase
             ->addValue('backslash', 'This string has a \\ backslash character.')
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 
     public function testArrayOfTables()
@@ -213,6 +213,6 @@ class TomlBuilderTest extends TestCase
                 ->addValue('name', 'platain')
             ->getTomlString();
 
-        $this->assertNotNull(Toml::Parse($result));
+        $this->assertNotNull(Input::Parse($result));
     }
 }

@@ -6,7 +6,7 @@
  * and open the template in the editor.
  */
 
-namespace Yosy;
+namespace Toml;
 
 /**
  * Description of ValueList
@@ -80,7 +80,7 @@ class ValueList extends Arrayable
     {
         $arrayConfig = [];
         foreach ($this->_list as $idx => $value) {
-            if ($recurse && is_object($value) && ($value instanceof \Yosy\Arrayable)) {
+            if ($recurse && is_object($value) && ($value instanceof \Toml\Arrayable)) {
                 
                 $arrayConfig[$idx] = $value->toArray();
             } else {

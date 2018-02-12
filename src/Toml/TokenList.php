@@ -1,6 +1,6 @@
 <?php
 
-namespace Yosy;
+namespace Toml;
 /**
  * Description of TokenArray
  * Just enough to satisfy LexerText
@@ -83,7 +83,7 @@ class TokenList
     
     /**
      * Token from current parse position
-     * @return \Yosy\Token
+     * @return \Toml\Token
      */
     public function getToken() : ?Token {
         return $this->token;

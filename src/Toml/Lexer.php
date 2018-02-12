@@ -9,11 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosy\Toml;
-
-use Yosy\TokenStream;
-use Yosy\KeyTable;
-use Yosy\TokenList;
+namespace Toml;
 
 /**
  * Lexer for Toml strings.

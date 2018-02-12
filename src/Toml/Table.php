@@ -17,7 +17,7 @@
  * @author Michael Rynn
  */
 
-namespace Yosy;
+namespace Toml;
 
 /**
  * Converts all keys to string, stores values as internal php object property.
@@ -139,7 +139,7 @@ class Table extends Arrayable
     {
         $arrayConfig = [];
         foreach (get_object_vars($this) as $key => $value) {
-            if ($recurse && is_object($value) && ($value instanceof \Yosy\Arrayable)) {
+            if ($recurse && is_object($value) && ($value instanceof \Toml\Arrayable)) {
                 $arrayConfig[$key] = $value->toArray();
             } else {
                 $arrayConfig[$key] = $value;
@@ -159,7 +159,7 @@ class Table extends Arrayable
         }
 
         foreach (get_object_vars($this) as $key => $value) {
-            if (is_object($value) && (is_a($value, '\Yosy\Toml\Table') || is_a($value, '\Yosy\Toml\TableList'))) {
+            if (is_object($value) && (is_a($value, '\Toml\Toml\Table') || is_a($value, '\Toml\Toml\TableList'))) {
                 $value->treeIterateValues($callback);
             } else {
                 $this->$key = \call_user_func($callback, $value);

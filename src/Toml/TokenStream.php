@@ -6,9 +6,8 @@
  * and open the template in the editor.
  */
 
-namespace Yosy;
+namespace Toml;
 
-use Yosy\Lexer;
 
 /**
  * Description of TokenStream
@@ -100,7 +99,7 @@ class TokenStream
 
     /**
      * Get all token details of parse step
-     * @return \Yosy\Token
+     * @return \Toml\Token
      */
     public function getToken(): Token
     {
@@ -126,8 +125,8 @@ class TokenStream
     {
         return $this->parseNextId($this->regex);
     }
-/** 
-     * Advance the parse then return the internal token id.
+    /** 
+     * Fetch internal token id.
      */
     public function getTokenId(): int
     {
@@ -155,7 +154,7 @@ class TokenStream
      * $patterns match, the next unicode character is checked against the
      * assigned Singles table, and its token id is returned, or else
      * the character value is assigned the UnknownId
-     * @param \Yosy\KeyTable $patterns
+     * @param \Toml\KeyTable $patterns
      * @return int
      */
     public function parseNextId(KeyTable $patterns) : int

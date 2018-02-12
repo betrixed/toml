@@ -11,7 +11,7 @@
  * @author Michael Rynn
  */
 
-namespace Yosy;
+namespace Toml;
 /**
  * This object is limited to storing Table objects in numeric
  * zero-indexed array
@@ -38,7 +38,7 @@ class TableList extends Arrayable {
     }
     /**
      * Return last Table object
-     * @return \Yosy\Table
+     * @return \Toml\Table
      */
     public function getEndTable() : Table {
         return $this->_list[count($this->_list)-1];
@@ -49,7 +49,7 @@ class TableList extends Arrayable {
     }
     /**
      * Return a new table added to the end of the list
-     * @return \Yosy\Toml\Table
+     * @return \Toml\Toml\Table
      */
     public function newTable() : Table {
         $table = new Table();
@@ -68,7 +68,7 @@ class TableList extends Arrayable {
      */
     public function offsetSet($index, $value) {
         $key = intval($index);
-        if (!is_a($value, '\Yosy\Toml\Table')) {
+        if (!is_a($value, '\Toml\Toml\Table')) {
             throw new XArrayable('TableList Value must be a Table');
         }
         $this->_list[$key] = $value;

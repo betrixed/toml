@@ -1,5 +1,5 @@
 <?php
-namespace Yosy;
+namespace Toml;
 
 /**
  * Provides array syntax like access to get and set PHP object properties, and

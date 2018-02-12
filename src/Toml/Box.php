@@ -6,11 +6,12 @@
  * and open the template in the editor.
  */
 
-namespace Yosy;
+namespace Toml;
 
 /**
  * Description of Box
  * Anything can go here, All access allowed
+ * Emulate object reference of enclosed array, without reference &
  * @author Michael Rynn
  */
 class Box

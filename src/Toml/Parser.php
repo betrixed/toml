@@ -12,15 +12,7 @@
  *  Modified as preparation for attempt at Zephir Version. 
  */
 
-namespace Yosy\Toml;
-
-use Yosy\Table;
-use Yosy\TableList;
-use Yosy\KeyTable;
-use Yosy\TokenStream;
-use Yosy\Token;
-use Yosy\ValueList;
-use Yosy\XArrayable;
+namespace Toml;
 
 /**
  * Tracking information for Arrayable tag property
@@ -606,7 +598,7 @@ class Parser
 
     /**
      * Recursive call of itself.
-     * @param \Yosymfony\Toml\TokenStream $ts
+     * @param \Tomlmfony\Toml\TokenStream $ts
      * @return array
      */
     private function parseArray(TokenStream $ts): ValueList
@@ -909,7 +901,7 @@ class Parser
                         $testObj->setTag($tag);
                     } else {
                         // Must be Arrayable, had all parts so far
-                        $preMade = ($testObj instanceof \Yosy\Arrayable);
+                        $preMade = ($testObj instanceof \Toml\Arrayable);
                         if (!$preMade) {
                             $path = $this->getPathName($parts) . '.' . $partKey;
                             throw new XArrayable('Duplicate key path: ' . $path . ' line ' . $pathToken->line);

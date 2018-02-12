@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Yosy\Toml\Exception;
+namespace Toml\Exception;
 
 /**
  * Exception class thrown when an error occurs during parsing.

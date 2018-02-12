@@ -12,8 +12,8 @@
 namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Yosy\Toml\Parser;
-use Yosy\Toml\Lexer;
+use Toml\Parser;
+use Toml\Lexer;
 
 class ParserTest extends TestCase
 {
