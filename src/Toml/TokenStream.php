@@ -108,7 +108,12 @@ class TokenStream
         return $token;
     }
 
-
+    /**
+     * Return line associated with current token
+     */
+    public function getLine() : int {
+        return $this->tokenLine;
+    }
     /**
      * Return the current parse step value
      * @return string

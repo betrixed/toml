@@ -67,15 +67,6 @@ class Parser
     public $basicString = [];
     public $literalString = [];
 
-    public function fromRegexTable(array $ids): KeyTable
-    {
-        $kt = new KeyTable([]);
-
-        foreach ($ids as $idx) {
-            $kt[$idx] = Lexer::$Regex[$idx];
-        }
-        return $kt;
-    }
 
     /**
      * Set the expression set to the previous on the
@@ -133,13 +124,13 @@ class Parser
     public function __construct()
     {
 
-        $this->root = new Table();
+        $this->root = new KeyTable();
         $this->table = $this->root;
 
-        $this->briefExpressions = $this->fromRegexTable(Lexer::$BriefList);
-        $this->fullExpressions = $this->fromRegexTable(Lexer::$FullList);
-        $this->basicString = $this->fromRegexTable(Lexer::$BasicStringList);
-        $this->literalString = $this->fromRegexTable(Lexer::$LiteralStringList);
+        $this->briefExpressions = new KeyTable(Lexer::getExpSet(Lexer::$BriefList));
+        $this->fullExpressions = new KeyTable(Lexer::getExpSet(Lexer::$FullList));
+        $this->basicString = new KeyTable(Lexer::getExpSet(Lexer::$BasicStringList));
+        $this->literalString = new KeyTable(Lexer::getExpSet(Lexer::$LiteralStringList));
 
         $ts = new TokenStream();
         $ts->setSingles(new KeyTable(Lexer::$Singles));
@@ -178,12 +169,12 @@ class Parser
      */
     public function parse(string $input): array
     {
-        if (preg_match('//u', $input) === false) {
+        if (preg_match("//u", $input) === false) {
             throw new XArrayable('The TOML input does not appear to be valid UTF-8.');
         }
 
         $input = str_replace(["\r\n", "\r"], "\n", $input);
-        $input = str_replace("\t", ' ', $input);
+        $input = str_replace("\t", " ", $input);
 
         // this function does or dies
 
@@ -323,7 +314,7 @@ class Parser
             case Lexer::T_INTEGER :
                 return (string) $this->parseInteger($ts);
             default:
-                $this->unexpectedTokenError($ts->getToken(), 'Unexpected token in parseKeyName');
+                $this->unexpectedTokenError($ts->getToken(), 'Improper key');
                 break;
         }
     }
@@ -355,7 +346,7 @@ class Parser
             case Lexer::T_DATE_TIME:
                 return $this->parseDatetime($ts);
             default:
-                $this->unexpectedTokenError($ts->getToken(), 'Expected boolean, integer, long, string or datetime.'
+                $this->unexpectedTokenError($ts->getToken(), 'Value expected: boolean, integer, string or datetime'
                 );
                 break;
         }
@@ -372,7 +363,7 @@ class Parser
 
         if (preg_match('/([^\d]_[^\d])|(_$)/', $value)) {
             $this->syntaxError(
-                    'Invalid integer number: underscore must be surrounded by at least one digit.', $ts->getToken()
+                    'Invalid integer number: underscore must be surrounded by at least one digit', $ts->getToken()
             );
         }
 
@@ -393,7 +384,7 @@ class Parser
 
         if (preg_match('/([^\d]_[^\d])|_[eE]|[eE]_|(_$)/', $value)) {
             $this->syntaxError(
-                    'Invalid float number: underscore must be surrounded by at least one digit.', $ts->getToken()
+                    'Invalid float number: underscore must be surrounded by at least one digit', $ts->getToken()
             );
         }
 
@@ -615,14 +606,20 @@ class Parser
         if ($tokenId === Lexer::T_HASH) {
             $tokenId = $this->parseCommentsAndSpace($ts);
         }
-            
+        
         while ($tokenId !== Lexer::T_RIGHT_SQUARE_BRACE) {
             if ($tokenId === Lexer::T_LEFT_SQUARE_BRACE) {
-                $result[] = $this->parseArray($ts);
+                $value = $this->parseArray($ts);
             } else {
                 // Returned value is a singular class instance to pass parameters
-                $result[] = $this->parseSimpleValue($ts);
+                $value = $this->parseSimpleValue($ts);
             }
+            try {
+            $result[] = $value;
+            }
+            catch(XArrayable $x) {
+                throw new XArrayable($x->getMessage() . " at line " . $ts->getLine());
+            } 
             $tokenId = $ts->moveNextId();
             while ($tokenId === Lexer::T_SPACE || $tokenId === Lexer::T_NEWLINE) {
                 $tokenId = $ts->moveNextId();
@@ -666,7 +663,7 @@ class Parser
         // TODO: Else or Assert??
         $work = $this->table;
         if ($work->offsetExists($keyName) === false) {
-            $work[$keyName] = new Table();
+            $work[$keyName] = new KeyTable();
         }
         // TODO: Else or Assert??
 
@@ -755,11 +752,10 @@ class Parser
         return $tokenId;
     }
 
-    private function tablePathError($msg, Token $token = null)
+    private function tablePathError($msg)
     {
-        if (!is_null($token)) {
-            $msg .= ", Line " . $token->line;
-        }
+        $token = $this->ts->getToken();
+        $msg .= " at line " . $token->line;
         throw new XArrayable($msg);
     }
 
@@ -819,16 +815,16 @@ class Parser
         $pathToken = $ts->getToken();
         $tokenId = $pathToken->id;
         if ($tokenId != Lexer::T_LEFT_SQUARE_BRACE) {
-            $this->tablePathError("Path start [ expected", $pathToken);
+            $this->tablePathError("Path start [ expected");
         }
         $tokenId = $ts->moveNextId();
         while (true) {
             switch ($tokenId) {
                 case Lexer::T_HASH:
-                    $this->tablePathError("Unexpected '#' in path", $ts->getToken());
+                    $this->tablePathError("Unexpected '#' in path");
                     break;
                 case Lexer::T_EQUAL:
-                    $this->tablePathError("Unexpected '=' in path", $ts->getToken());
+                    $this->tablePathError("Unexpected '=' in path");
                     break;
                 case Lexer::T_SPACE:
                     $tokenId = $ts->moveNextId();
@@ -836,13 +832,13 @@ class Parser
                 case Lexer::T_EOS:
                     break 2;
                 case Lexer::T_NEWLINE:
-                    $this->tablePathError("New line in unfinished path", $ts->getToken());
+                    $this->tablePathError("New line in unfinished path");
                     break;
                 case Lexer::T_RIGHT_SQUARE_BRACE:
 
                     if ($isAOT) {
                         if ($AOTLength == 0) {
-                            $this->tablePathError("AOT Segment cannot be empty", $ts->getToken());
+                            $this->tablePathError("AOT Segment cannot be empty");
                         }
                         $isAOT = false;
                         $AOTLength = 0;
@@ -854,11 +850,11 @@ class Parser
                     }
                 case Lexer::T_LEFT_SQUARE_BRACE:
                     if ($dotCount < 1 && count($parts) > 0) {
-                        $this->tablePathError("Expected a '.' after path key", $ts->getToken());
+                        $this->tablePathError("Expected a '.' after path key");
                     }
                     if ($isAOT) {
                         // one too many
-                        $this->tablePathError("Too many consecutive [ in path", $ts->getToken());
+                        $this->tablePathError("Too many consecutive [ in path");
                     }
                     $tokenId = $ts->moveNextId();
                     $isAOT = true;
@@ -867,7 +863,7 @@ class Parser
                 case Lexer::T_DOT;
 
                     if ($dotCount === 1) {
-                        $this->tablePathError("Found '..' in path", $ts->getToken());
+                        $this->tablePathError("Found '..' in path");
                     }
                     $dotCount += 1;
                     $tokenId = $ts->moveNextId();
@@ -876,7 +872,7 @@ class Parser
                 default:
                     $partKey = $this->parseKeyName($ts);
                     if ($dotCount < 1 && count($parts) > 0) {
-                        $this->tablePathError("Expected a '.' after path key", $ts->getToken());
+                        $this->tablePathError("Expected a '.' after path key");
                     }
                     $dotCount = 0;
                     $testObj = $pobj->offsetExists($partKey) ? $pobj[$partKey] : null;
@@ -894,7 +890,7 @@ class Parser
                             $pobj[$partKey] = $testObj;
                             $pobj = $testObj->getEndTable();
                         } else {
-                            $testObj = new Table();
+                            $testObj = new KeyTable();
                             $pobj[$partKey] = $testObj;
                             $pobj = $testObj;
                         }
@@ -927,7 +923,7 @@ class Parser
         }
         // check the rules
         if (count($parts) == 0) {
-            $this->tablePathError('Table path cannot be empty at line ' . $pathToken->line);
+            $this->tablePathError('Table path cannot be empty');
         }
        
         if (!$hitNew) {
@@ -1087,7 +1083,7 @@ class Parser
             $name = Lexer::tokenName($token->id);
             $line = $token->line;
             $value = $token->value;
-            $tokenMsg = sprintf('Token: "%s" line: %s', $name, $line);
+            $tokenMsg = sprintf('Token: %s line: %s', $name, $line);
             if (!$token->isSingle) {
                 $tokenMsg .= " value { '" . $value . "' }.";
             } else {

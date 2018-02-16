@@ -35,7 +35,7 @@ class ValueList extends Arrayable
         }
         else {
             if ($this->_type !== $atype) {
-                throw new XArrayable('Type ' . $atype . ' added to ValueList of ' . $this->_type);
+                throw new XArrayable("Type " . $atype . " cannot be added to ValueList of " . $this->_type);
             }
         }
 

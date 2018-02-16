@@ -5,15 +5,11 @@
  */
 
 /**
- * Description of Table
- * This is almost exactly like Phalcon\Config.
- * The original zephir config.zep source was directly reimplemented in php.
- * There is an added callback for value transformation in the offsetSet method.
- * This was originally used for Lookup of ${name} for substitution by a PHP defined(name) value,
- * useful for filename paths.
- * I found it simpler to just iterate and substitute after initial read
- * , and this abolished a  need to reimplement Phalcon\Config
- * 
+ * Store properties in objects property table.
+ * I thought that strval(index) conversions would
+ * enforce string keys, but PHP always converts numeric strings
+ * into binary values. PHP internals override any attempt
+ * to use numeric strings as keys.
  * @author Michael Rynn
  */
 
@@ -61,30 +57,26 @@ class Table extends Arrayable
      */
     public function offsetSet($index, $value)
     {
-        $key = strval($index);
         if (is_array($value)) {
-            $this->$key = new Table($value);
+            $this->$index = new Table($value);
         } else {
-            $this->$key = $value; // default magic __set
+            $this->$index = $value; // default magic __set
         }
     }
 
     public function offsetExists($index): bool
     {
-        $key = strval($index);
-        return isset($this->$key);
+        return isset($this->$index);
     }
 
     public function offsetGet($index)
     {
-        $key = strval($index);
-        return $this->$key;
+        return $this->$index;
     }
 
     public function offsetUnset($index)
     {
-        $key = strval($index);
-        $this->$key = null;
+        $this->$index = null;
     }
 
     public function count(): int
@@ -122,9 +114,8 @@ class Table extends Arrayable
 
     public function get($index, $defaultValue = null)
     {
-        $key = strval($index);
-        if (isset($this->$key)) {
-            return $this->$key;
+        if (isset($this->$index)) {
+            return $this->$index;
         }
         return $defaultValue;
     }

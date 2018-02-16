@@ -16,13 +16,11 @@ class KeyTable extends Arrayable
 
     public $_store;
 
-    public function __construct(array $arrayConfig = null)
+    public function __construct(array $init = null)
     {
         //$this->setTag(true);
-        if (!is_null($arrayConfig)) {
-            foreach ($arrayConfig as $key => $value) {
-                $this->_store[$key] = $value;
-            }
+        if (!empty($init)) {
+            $this->_store = $init;
         } else {
             $this->_store = [];
         }

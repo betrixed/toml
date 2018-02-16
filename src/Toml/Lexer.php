@@ -167,5 +167,12 @@ class Lexer
         }
         return self::$nameSet[$tokenId];
     }
-
+    
+    static public function getExpSet(array $idList): array {
+        $result = [];
+        foreach($idList as $id) {
+            $result[$id] = self::$Regex[$id];
+        }
+        return $result;
+    }
 }

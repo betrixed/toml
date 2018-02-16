@@ -54,9 +54,9 @@ class TokenList
      */
     public function isNextSequence(array $tokenIds) : bool
     {
-        $currentIndex = $this->index;
+        $base = $this->index;
         foreach ($tokenIds as $idx => $id) {
-            $offset = $idx + $currentIndex;
+            $offset = $idx + $base;
             if ($offset < $this->ct) {
                 if ($this->tokens[$offset]->id != $id)
                     return false;
@@ -100,7 +100,7 @@ class TokenList
      * Token value from current parse position
      *  
      */
-    public function getValue() : string {
+    public function getValue()  {
         return (!is_null($this->token)) ? $token->value : null;
     }
 }
