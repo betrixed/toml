@@ -5,17 +5,27 @@
 
 namespace Toml;
 /**
- * This is more general, no frills, object wrap of a PHP array
+ * This is a general, no frills, object wrap of a PHP array
  * It is more inefficient than a bare PHP array.
- * The internal $_store is public for easy iteration.
+ * The internal $_store is public to allow iteration.
  * Any PHP key type is allowed. 
  * Aim is to have a "referenced" array as object without a reference operator &
  */
-class KeyTable extends Arrayable
+class KeyTable implements Arrayable
 {
 
     public $_store;
-
+    protected $_tag;
+    
+     public function setTag($any) {
+         $this->_tag = $any;
+     }
+        
+    public function getTag() {
+        return $this->_tag;
+    }
+    
+    
     public function __construct(array $init = null)
     {
         //$this->setTag(true);

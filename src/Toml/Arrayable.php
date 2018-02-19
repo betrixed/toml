@@ -9,16 +9,8 @@ namespace Toml;
  * @author Michael Rynn
  */
 
-abstract class Arrayable implements \ArrayAccess, \Countable {
-    private $_tag;
-    
-    public function setTag($any) {
-        $this->_tag = $any;
-    }
-    public function getTag() {
-        return $this->_tag;   
-    }
-    
-    abstract public function toArray(): array;
-
+interface Arrayable extends \ArrayAccess, \Countable {
+    public function setTag($any);   
+    public function getTag();
+    public function toArray(): array;
 }

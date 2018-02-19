@@ -77,6 +77,12 @@ class TokenStream
     }
 
     /**
+     * Return current expression set object
+     */
+    public function getExpMap() {
+        return $this->regex;
+    }
+    /**
      * For lookup of tokenId of single character string
      * Argument is reference to associative array[string] of int 
      * @param array $ref
@@ -181,24 +187,26 @@ class TokenStream
         } elseif ($this->offset === 0) {
             $this->tokenLine = $this->lineNo + 1;
         }
-
+        $test = $this->curLine;
+        $this->curLine = null;
         foreach ($patterns->_store as $id => $pattern) {
-            if (preg_match($pattern, $this->curLine, $matches)) {
+            $matches = null;
+            if (preg_match($pattern, $test, $matches)) {
                 $this->id = $id;
                 $this->value = $matches[1];
                 $this->isSingle = false;
                 $this->line = $this->tokenLine;
                 $takeOff = strlen($matches[0]);
                 $this->offset += $takeOff;
-                $this->curLine = substr($this->curLine, $takeOff);
+                $this->curLine = substr($test, $takeOff);
                 return $this->id;
             }
         }
         // no expressions matched, as a default, classify unicode character
-        $uni = mb_substr($this->curLine, 0, 1);
+        $uni = mb_substr($test, 0, 1);
         $takeoff = strlen($uni);
         $this->offset += $takeoff;
-        $this->curLine = substr($this->curLine, $takeoff);
+        $this->curLine = substr($test, $takeoff);
         $this->value = $uni;
 
         // There are a lot of single character lexer Ids, so just look

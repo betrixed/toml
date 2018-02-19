@@ -1,31 +1,44 @@
-This 'zephir-prep' branch is experimental, inspired by the discovery that Zephir does not do
-object references.
+This TOML parser implmentation for TOM04 was created in order to build a Zephir version,
+starting with the Yosymfony\Toml source.
 
-The PHP toml implementations I have seen all used array reference (array& $aref) 
-to indicate place in array tree.
-The alternative, using wrapper PHP , which are references, adds indirection and loses a small amount of efficiency, but it 
-also enables the parse to construct an object tree, before a final toArray() conversion.
-The object tree may be useful as TOML tree object builder as well.
+This version is maintained at [Betrixed\
+The few PHP TOML implementations I have seen all used array reference (array& $aref) 
+to generate and hold place in the TOML array tree.
+
+I chose to find out the hard way what it was like to write an extension using Zephir.
+Zephir is an altered and cut-down analog of PHP language. Its parser written in PHP, and 
+it generates C source code which compiles to a PHP extension, largely by doing things
+with PHP objects and functions, called from C.
+
+The PHP interpreted version of the TOML parser was written to remove the use of array references.
+The Zephir version uses the same code structure and strategy, the "algorithm" is the same.
+The same PHP objects and arrays are constructed from a TOML document file. 
+
+So there is  irreducible overhead in changing the PHP interpreter machine state.
+Some ballpark testing on a few TOML files, demonstrates that the interpreted version on PHP 7.2,
+takes no more than 21-25% longer than the compiled Zephir extension with similar code.
 
 Table and TableList objects
 =========================
 
-Zephir currently does not do reference operations, especially for arrays (&) 
-This implementation uses objects Table, TableList, and ValueList.
-Table uses the internal properties table of PHP objects.
-TableList implements array of Table.
+Zephir does not generate C code for Object or Array reference operators - (&). 
+This implementation uses objects KeyTable, TableList, and ValueList.
 
-A toArray() method will have to serve to return a native PHP array representation. The object structure is likely to be similar to the nestable Phalcon\Config
-object, which is part of the zephir compiled Phalcon php-extension website framework.
-Phalcon\Config stores keyed properties in the PHP object. Read access to these has php-object property efficiency.
-As all keys of Phalcon\Config are represented as strings, per requirement of PHP object properties, TOML is okay with that.
+All of these implement the Arrayable interface. 
+Arrayable extends interfaces \ArrayAccess and \Countable.
 
-Array of Tables - AOT, needs an object
----------------------------------------
+Arrayable adds the toArray() method returns a nested PHP array representation.
+Arrayable adds a generic setTag and getTag, to associate any value with the object
+without having to extend the storage tree objects. The Toml parser generates some
+small PartTag objects
 
-Phalcon\Config implements \ArrayAccess interface, on string object properties,
- but this is not compatible with a numeric key index. Therefore another object class is required to mediate numeric
-key access, such that its \ArrayAccess interface uses a real PHP array, rather than the internal property table of the object.
+```php
+interface Arrayable extends \ArrayAccess, \Countable {
+    public function setTag($any);   
+    public function getTag();
+    public function toArray(): array;
+}
+```
 
 TOML parser for PHP
 ===================

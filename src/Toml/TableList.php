@@ -16,17 +16,29 @@ namespace Toml;
  * This object is limited to storing Table objects in numeric
  * zero-indexed array
  */
-class TableList extends Arrayable {
+class TableList implements Arrayable {
     // This seperates key path component for nested Table objects.
+     const TABLE_CLASS = '\Toml\KeyTable';
+     
     private $_list;
-
-    public function __construct(array $arrayOfTable = null) {
-        if (is_null($arrayOfTable)) {
-            $this->_list = [new Table()];
+   
+    protected $_tag;
+    
+     public function setTag($any) {
+         $this->_tag = $any;
+     }
+        
+    public function getTag() {
+        return $this->_tag;
+    }
+    
+    public function __construct(array $init = null) {
+        if (is_null($init)) {
+            $this->_list = [new KeyTable()];
         }
         else {
             //TODO: check all members are Table objects, and no key:values
-            $this->_list = $arrayOfTable;
+            $this->_list = $init;
         }
     }
     /** 
@@ -40,7 +52,7 @@ class TableList extends Arrayable {
      * Return last Table object
      * @return \Toml\Table
      */
-    public function getEndTable() : Table {
+    public function getEndTable() : KeyTable {
         return $this->_list[count($this->_list)-1];
     }
     
@@ -51,8 +63,8 @@ class TableList extends Arrayable {
      * Return a new table added to the end of the list
      * @return \Toml\Toml\Table
      */
-    public function newTable() : Table {
-        $table = new Table();
+    public function newTable() : KeyTable {
+        $table = new KeyTable();
         $this->_list[] = $table;
         return $table;
     }
@@ -68,7 +80,7 @@ class TableList extends Arrayable {
      */
     public function offsetSet($index, $value) {
         $key = intval($index);
-        if (!is_a($value, '\Toml\Toml\Table')) {
+        if (!is_a($value, TableList::TABLE_CLASS)) {
             throw new XArrayable('TableList Value must be a Table');
         }
         $this->_list[$key] = $value;
@@ -125,7 +137,7 @@ class TableList extends Arrayable {
         }
             
         foreach ($this->_list as $idx => $value) {
-            if (is_object($value) && ($value instanceof \Toml\Table)) {
+            if (is_object($value) && ($value instanceof \Toml\Arrayable)) {
                 $value->treeIterateValues($callback);
             }
         }

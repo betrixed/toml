@@ -46,6 +46,9 @@ class Lexer
     const T_CHAR = 24;
     const T_LAST_TOKEN = 24; // for range values of token lookup
 
+    const TOML_VERSION = "0.4";
+    const USE_VERSION = "Interpreted";
+    
     static private $nameSet = [
         'T_BAD', //0
         'T_EQUAL', //1
@@ -89,29 +92,56 @@ class Lexer
     // for particular tests, Lexer::T_BASIC_UNESCAPED must be last
     // and single character expressions first.
     // otherwise keep them out of the way.
-
-    static public $Regex = [
-        Lexer::T_EQUAL => '/^(=)/',
-        Lexer::T_BOOLEAN => '/^(true|false)/',
-        Lexer::T_DATE_TIME => '/^(\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{6})?(Z|-\d{2}:\d{2})?)?)/',
-        Lexer::T_FLOAT => '/^([+-]?((((\d_?)+[\.]?(\d_?)*)[eE][+-]?(\d_?)+)|((\d_?)+[\.](\d_?)+)))/',
-        Lexer::T_INTEGER => '/^([+-]?(\d_?)+)/',
-        Lexer::T_3_QUOTATION_MARK => '/^(""")/',
-        Lexer::T_QUOTATION_MARK => '/^(")/',
-        Lexer::T_3_APOSTROPHE => "/^(''')/",
-        Lexer::T_APOSTROPHE => "/^(')/",
-        Lexer::T_HASH => '/^(#)/',
-        Lexer::T_SPACE => '/^(\s+)/',
-        Lexer::T_LEFT_SQUARE_BRACE => '/^(\[)/',
-        Lexer::T_RIGHT_SQUARE_BRACE => '/^(\])/',
-        Lexer::T_LEFT_CURLY_BRACE => '/^(\{)/',
-        Lexer::T_RIGHT_CURLY_BRACE => '/^(\})/',
-        Lexer::T_COMMA => '/^(,)/',
-        Lexer::T_DOT => '/^(\.)/',
-        Lexer::T_UNQUOTED_KEY => '/^([-A-Z_a-z0-9]+)/',
-        Lexer::T_ESCAPED_CHARACTER => '/^(\\\(b|t|n|f|r|"|\\\\|u[0-9AaBbCcDdEeFf]{4,4}|U[0-9AaBbCcDdEeFf]{8,8}))/',
-        Lexer::T_BASIC_UNESCAPED => '/^([\x{20}-\x{21}\x{23}-\x{26}\x{28}-\x{5A}\x{5E}-\x{10FFFF}]+)/u'
-    ];
+    static private $_AllRegExp;
+    static private $_AllSingles;
+    
+    
+    static public function getAllSingles(): KeyTable {
+        if (empty(Lexer::$_AllSingles)) {
+            $kt = new KeyTable();
+            $kt->offsetSet("=",Lexer::T_EQUAL);
+            $kt->offsetSet("[",Lexer::T_LEFT_SQUARE_BRACE);
+            $kt->offsetSet("]",Lexer::T_RIGHT_SQUARE_BRACE);
+            $kt->offsetSet(".",Lexer::T_DOT);
+            $kt->offsetSet(",",Lexer::T_COMMA);
+            $kt->offsetSet("\"",Lexer::T_QUOTATION_MARK);
+            $kt->offsetSet(".",Lexer::T_DOT);
+            $kt->offsetSet("{",Lexer::T_LEFT_CURLY_BRACE);
+            $kt->offsetSet("}",Lexer::T_RIGHT_CURLY_BRACE);
+            $kt->offsetSet("'",Lexer::T_APOSTROPHE);
+            $kt->offsetSet("#",Lexer::T_HASH);
+            $kt->offsetSet("\\",Lexer::T_ESCAPE);
+            Lexer::$_AllSingles = $kt;
+        }
+        return Lexer::$_AllSingles;
+    }
+    static public function getAllRegex() : KeyTable{
+        if (empty(Lexer::$_AllRegExp)) {
+            $kt = new KeyTable();
+            $kt->offsetSet(Lexer::T_EQUAL,"/^(=)/");
+            $kt->offsetSet(Lexer::T_BOOLEAN,"/^(true|false)/");
+            $kt->offsetSet(Lexer::T_DATE_TIME,"/^(\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)/");
+            $kt->offsetSet(Lexer::T_FLOAT,"/^([+-]?((((\\d_?)+[\\.]?(\\d_?)*)[eE][+-]?(\\d_?)+)|((\\d_?)+[\\.](\\d_?)+)))/");
+            $kt->offsetSet(Lexer::T_INTEGER,"/^([+-]?(\\d_?)+)/");
+            $kt->offsetSet(Lexer::T_3_QUOTATION_MARK,"/^(\"\"\")/");
+            $kt->offsetSet(Lexer::T_QUOTATION_MARK,"/^(\")/");
+            $kt->offsetSet(Lexer::T_3_APOSTROPHE,"/^(\'\'\')/");
+            $kt->offsetSet(Lexer::T_APOSTROPHE,"/^(\')/");
+            $kt->offsetSet(Lexer::T_HASH,"/^(#)/");
+            $kt->offsetSet(Lexer::T_SPACE,"/^(\\s+)/");
+            $kt->offsetSet(Lexer::T_LEFT_SQUARE_BRACE,"/^(\\[)/");
+            $kt->offsetSet(Lexer::T_RIGHT_SQUARE_BRACE,"/^(\\])/");
+            $kt->offsetSet(Lexer::T_LEFT_CURLY_BRACE,"/^(\\{)/");
+            $kt->offsetSet(Lexer::T_RIGHT_CURLY_BRACE,"/^(\\})/");
+            $kt->offsetSet(Lexer::T_COMMA,"/^(,)/");
+            $kt->offsetSet(Lexer::T_DOT,"/^(\\.)/");
+            $kt->offsetSet(Lexer::T_UNQUOTED_KEY,"/^([-A-Z_a-z0-9]+)/");
+            $kt->offsetSet(Lexer::T_ESCAPED_CHARACTER,"/^(\\\\(b|t|n|f|r|\"|\\\\|u[0-9AaBbCcDdEeFf]{4,4}|U[0-9AaBbCcDdEeFf]{8,8}))/");
+            $kt->offsetSet(Lexer::T_BASIC_UNESCAPED,"/^([\\x{20}-\\x{21}\\x{23}-\\x{26}\\x{28}-\\x{5A}\\x{5E}-\\x{10FFFF}]+)/u");
+            Lexer::$_AllRegExp = $kt;
+        }
+        return Lexer::$_AllRegExp;
+    }
     // php retains an array insertion order, so order of these is signficant, 
     // and if it wasn't , it would need to be enforced by iterating these directly
     static public $BriefList = [
@@ -144,8 +174,8 @@ class Lexer
         // clone each from the stream
 
         $stream = new TokenStream();
-        $stream->setExpList(new KeyTable(self::$Regex));
-        $stream->setSingles(new KeyTable(self::$Singles));
+        $stream->setExpList(Lexer::getAllRegex());
+        $stream->setSingles(Lexer::getAllSingles());
         $stream->setUnknownId(Lexer::T_CHAR);
         $stream->setNewLineId(Lexer::T_NEWLINE);
         $stream->setEOSId(Lexer::T_EOS);
@@ -168,10 +198,24 @@ class Lexer
         return self::$nameSet[$tokenId];
     }
     
-    static public function getExpSet(array $idList): array {
-        $result = [];
+    static public function getTomlVersion() : string {
+        return Lexer::TOML_VERSION;
+    }
+    
+    static public function getUseVersion() : string {
+        return Lexer::USE_VERSION;
+    }
+    /** return a KeyTable with expressions selected by $idList
+     * 
+     * @param array $idList
+     * @return KeyTable
+     */
+    static public function getExpSet(array $idList) {
+        $all = Lexer::getAllRegex();
+        
+        $result = new KeyTable();
         foreach($idList as $id) {
-            $result[$id] = self::$Regex[$id];
+            $result->offsetSet($id, $all->offsetGet($id));
         }
         return $result;
     }

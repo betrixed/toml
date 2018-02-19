@@ -16,24 +16,34 @@ namespace Toml;
  * Toml creates arrays with values of only one type.
  * Aliased the "Tag" property with the array _type.
  */
-class ValueList extends Arrayable
+class ValueList implements Arrayable
 {
+
     public $_type; // string indication of value type
-    public $_list =[];
-    
-    public function offsetSet( $index, $value)
+    public $_list = [];
+    protected $_tag;
+
+    public function setTag($any)
+    {
+        $this->_tag = $any;
+    }
+
+    public function getTag()
+    {
+        return $this->_tag;
+    }
+
+    public function offsetSet($index, $value)
     {
         if (is_null($index)) {
             $index = count($this->_list);
-        }    
-        else {
+        } else {
             $index = intval($index);
         }
         $atype = gettype($value);
         if (count($this->_list) === 0) {
             $this->_type = $atype;
-        }
-        else {
+        } else {
             if ($this->_type !== $atype) {
                 throw new XArrayable("Type " . $atype . " cannot be added to ValueList of " . $this->_type);
             }
@@ -42,17 +52,17 @@ class ValueList extends Arrayable
         $this->_list[$index] = $value;
     }
 
-    public function offsetExists( $index): bool
+    public function offsetExists($index): bool
     {
         return isset($this->_list[$index]);
     }
 
-    public function offsetGet( $index)
+    public function offsetGet($index)
     {
         return ($this->_list[$index] ?? null);
     }
 
-    public function offsetUnset( $index)
+    public function offsetUnset($index)
     {
         unset($this->_list[$index]);
     }
@@ -62,7 +72,6 @@ class ValueList extends Arrayable
         return count($this->_list);
     }
 
-    
     public function get(int $index, $defaultValue = null)
     {
         return isset($this->_list[$index]) ? $this->_list[$index] : $defaultValue;
@@ -81,7 +90,7 @@ class ValueList extends Arrayable
         $arrayConfig = [];
         foreach ($this->_list as $idx => $value) {
             if ($recurse && is_object($value) && ($value instanceof \Toml\Arrayable)) {
-                
+
                 $arrayConfig[$idx] = $value->toArray();
             } else {
                 $arrayConfig[$idx] = $value;
@@ -89,4 +98,5 @@ class ValueList extends Arrayable
         }
         return $arrayConfig;
     }
+
 }
