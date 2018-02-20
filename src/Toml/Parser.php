@@ -27,8 +27,9 @@ class Parser
     const E_KEY = 0;
     const E_VALUE = 1;
     const E_LSTRING = 2;
-    const E_BSTRING = 3;
-    const E_ALL = 4;
+    const E_MLSTRING = 3;
+    const E_BSTRING = 4;
+    const E_ALL = 5;
 
     private $root; // root Table object
     private $table; // dyanamic reference to current Table object
@@ -41,8 +42,12 @@ class Parser
     // key value regular expression sets (KeyTable)
     static private $keyRegex;
     static private $valRegex;
-    static private $regBasic;
-    static private $regLiteral;
+    // 1 or 3 "quote"  has escapes, 3 is multi line 
+    static private $regEString; 
+    // one line, single quote string
+    static private $regLString; 
+    // multiline, triple quote string
+    static private $regMLString; 
 
     /**
      * Set the expression set to the previous on the
@@ -91,20 +96,6 @@ class Parser
                     Parser::$keyRegex = $result;
                 }
                 break;
-            case Parser::E_BSTRING:
-                $result = Parser::$regBasic;
-                if (empty($result)) {
-                    $result = Lexer::getExpSet(Lexer::$BasicStringList);
-                    Parser::$regBasic = $result;
-                }
-                break;
-            case Parser::E_LSTRING:
-                $result = Parser::$regLiteral;
-                if (empty($result)) {
-                    $result = Lexer::getExpSet(Lexer::$LiteralStringList);
-                    Parser::$regLiteral = $result;
-                }
-                break;
             case Parser::E_VALUE:
                 $result = Parser::$valRegex;
                 if (empty($result)) {
@@ -112,6 +103,28 @@ class Parser
                     Parser::$valRegex = $result;
                 }
                 break;
+            case Parser::E_LSTRING:
+                $result = Parser::$regLString;
+                if (empty($result)) {
+                    $result = Lexer::getExpSet(Lexer::$LiteralString);
+                    Parser::$regLString = $result;
+                }
+                break;    
+            case Parser::E_BSTRING:
+                $result = Parser::$regEString;
+                if (empty($result)) {
+                    $result = Lexer::getExpSet(Lexer::$BasicString);
+                    Parser::$regEString = $result;
+                }
+                break;
+            case Parser::E_MLSTRING:
+                $result = Parser::$regMLString;
+                if (empty($result)) {
+                    $result = Lexer::getExpSet(Lexer::$LiteralMLString);
+                    Parser::$regMLString = $result;
+                }
+                break;   
+            
             case Parser::E_ALL:
                 $result = Lexer::getAllRegex();
                 break;
@@ -125,18 +138,23 @@ class Parser
     {
         $this->expSetId = $value;
         switch ($value) {
+            case Parser::E_VALUE:
+                $this->ts->setExpList(Parser::$valRegex);
+                break;
             case Parser::E_KEY:
                 $this->ts->setExpList(Parser::$keyRegex);
                 break;
-            case Parser::E_BSTRING:
-                $this->ts->setExpList(Parser::$regBasic);
-                break;
             case Parser::E_LSTRING:
-                $this->ts->setExpList(Parser::$regLiteral);
+                $this->ts->setExpList(Parser::$regLString);
                 break;
-            case Parser::E_VALUE:
+            case Parser::E_BSTRING:
+                $this->ts->setExpList(Parser::$regEString);
+                break;
+            case Parser::E_MLSTRING:
+                $this->ts->setExpList(Parser::$regMLString);
+                break;
             default:
-                $this->ts->setExpList(Parser::$valRegex);
+                throw new XArrayable("Invalid expression set constant " . $value);
                 break;
         }
     }
@@ -152,9 +170,10 @@ class Parser
 
         Parser::$keyRegex = $this->getExpSet(Parser::E_KEY);
         Parser::$valRegex = $this->getExpSet(Parser::E_VALUE);
-        Parser::$regBasic = $this->getExpSet(Parser::E_BSTRING);
-        Parser::$regLiteral = $this->getExpSet(Parser::E_LSTRING);
-
+        Parser::$regEString = $this->getExpSet(Parser::E_BSTRING);
+        Parser::$regLString = $this->getExpSet(Parser::E_LSTRING);
+        Parser::$regMLString = $this->getExpSet(Parser::E_MLSTRING);
+        
         $ts = new TokenStream();
         $ts->setSingles(Lexer::getAllSingles());
         $ts->setUnknownId(Lexer::T_CHAR);
@@ -331,7 +350,7 @@ class Parser
             case Lexer::T_UNQUOTED_KEY:
                 return $ts->getValue();
             case Lexer::T_QUOTATION_MARK:
-                return $this->parseBasicString($ts, $stripQuote);
+                return $this->parseEscapeString($ts, $stripQuote);
             case Lexer::T_APOSTROPHE:
                 return $this->parseLiteralString($ts, $stripQuote);
             case Lexer::T_INTEGER :
@@ -359,13 +378,13 @@ class Parser
             case Lexer::T_FLOAT:
                 return $this->parseFloat($ts);
             case Lexer::T_QUOTATION_MARK:
-                return $this->parseBasicString($ts);
+                return $this->parseEscapeString($ts);
             case Lexer::T_3_QUOTATION_MARK:
-                return $this->parseMultilineBasicString($ts);
+                return $this->parseMLEscapeString($ts);
             case Lexer::T_APOSTROPHE:
                 return $this->parseLiteralString($ts);
             case Lexer::T_3_APOSTROPHE:
-                return $this->parseMultilineLiteralString($ts);
+                return $this->parseMLString($ts);
             case Lexer::T_DATE_TIME:
                 return $this->parseDatetime($ts);
             default:
@@ -428,7 +447,7 @@ class Parser
      * @param type $stripQuote
      * @return string
      */
-    private function parseBasicString(TokenStream $ts, $stripQuote = true): string
+    private function parseEscapeString(TokenStream $ts, $stripQuote = true): string
     {
         $this->pushExpSet(Parser::E_BSTRING);
 
@@ -459,7 +478,7 @@ class Parser
         return $result;
     }
 
-    private function parseMultilineBasicString(TokenStream $ts): string
+    private function parseMLEscapeString(TokenStream $ts): string
     {
         // TODO: inline assert can be dropped in final version
         if (($ts->getTokenId() !== Lexer::T_3_QUOTATION_MARK)) {
@@ -538,12 +557,12 @@ class Parser
         return $result;
     }
 
-    private function parseMultilineLiteralString(TokenStream $ts): string
+    private function parseMLString(TokenStream $ts): string
     {
         if ($ts->getTokenId() !== Lexer::T_3_APOSTROPHE) {
             $this->throwTokenError($ts->getToken(), Lexer::T_3_APOSTROPHE);
         }
-        $this->pushExpSet(Parser::E_LSTRING);
+        $this->pushExpSet(Parser::E_MLSTRING);
         $result = '';
 
         $tokenId = $ts->moveNextId();
@@ -576,27 +595,27 @@ class Parser
         $value = $ts->getValue();
 
         switch ($value) {
-            case '\b':
+            case 'b':
                 return "\b";
-            case '\t':
+            case 't':
                 return "\t";
-            case '\n':
+            case 'n':
                 return "\n";
-            case '\f':
+            case 'f':
                 return "\f";
-            case '\r':
+            case 'r':
                 return "\r";
-            case '\"':
-                return '"';
-            case '\\\\':
-                return '\\';
+            case '"':
+                return "\"";
+            case '\\':
+                return "\\";
         }
 
-        if (strlen($value) === 6) {
-            return json_decode('"' . $value . '"');
+        if (strlen($value) === 5) {
+            return json_decode('"\\' . $value . '"');
         }
         $matches = null;
-        preg_match("/\\\\U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/", $value, $matches);
+        preg_match("/U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/", $value, $matches);
 
         return json_decode('"\u' . $matches[1] . '\u' . $matches[2] . '"');
     }

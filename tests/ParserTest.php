@@ -252,6 +252,7 @@ toml;
                 ], $array);
     }
 
+
     public function testParseMustParseLiteralStrings()
     {
         $toml = <<<'toml'
@@ -262,6 +263,7 @@ toml;
         carriage = 'This string has a \r carriage return character.'
         slash = 'This string has a \/ slash character.'
         backslash = 'This string has a \\ backslash character.'
+        braces_too = 'Braces are [part.of] {life="good"}'
 toml;
 
         $array = $this->parser->parse($toml);
@@ -274,6 +276,7 @@ toml;
             'carriage' => 'This string has a \r carriage return character.',
             'slash' => 'This string has a \/ slash character.',
             'backslash' => 'This string has a \\\\ backslash character.',
+            'braces_too' => 'Braces are [part.of] {life="good"}'
                 ], $array);
     }
 
