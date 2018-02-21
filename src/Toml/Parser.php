@@ -310,8 +310,8 @@ class Parser
     private function getSimpleValue(int $tokenId) {  
         $ts = $this->ts;
         if ($tokenId === Lexer::T_APOSTROPHE) {
-            // 3 or 1 quote?
-            $try3Q = $ts->moveRegex("/^([\\x{27}]{3,3})/");
+            // 3 or 1 quote? [\\x{27}]{3,3}
+            $try3Q = $ts->moveRegex("/^(\\'\\'\\')/");
             if (strlen($try3Q)==3) {
                 $value = $this->parseMLString($ts);
             }
@@ -321,8 +321,8 @@ class Parser
             }
             return $value;
         } elseif ($tokenId === Lexer::T_QUOTATION_MARK) {
-            // 3 or 1 quote?
-            $try3Q = $ts->moveRegex("/^([\\x{22}]{3,3})/");
+            // 3 or 1 quote? [\\x{22}]{3,3}
+            $try3Q = $ts->moveRegex("/^(\\\"\\\"\\\")/");
             if (strlen($try3Q)==3) {
                 $value = $this->parseMLEscapeString($ts);
             }
