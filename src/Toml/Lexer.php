@@ -78,19 +78,7 @@ class Lexer
         'T_LITERAL_STRING', //24
         'T_CHAR', // 25
     ];
-    static public $Singles = [
-        '=' => Lexer::T_EQUAL,
-        '[' => Lexer::T_LEFT_SQUARE_BRACE,
-        ']' => Lexer::T_RIGHT_SQUARE_BRACE,
-        '.' => Lexer::T_DOT,
-        ',' => Lexer::T_COMMA,
-        '{' => Lexer::T_LEFT_CURLY_BRACE,
-        '}' => Lexer::T_RIGHT_CURLY_BRACE,
-        '"' => Lexer::T_QUOTATION_MARK,
-        "'" => Lexer::T_APOSTROPHE,
-        "#" => Lexer::T_HASH,
-        '\\' => Lexer::T_ESCAPE,
-    ];
+    
     // for particular tests, Lexer::T_BASIC_UNESCAPED must be last
     // and single character expressions first.
     // otherwise keep them out of the way.
@@ -113,6 +101,11 @@ class Lexer
             $kt->offsetSet("'",Lexer::T_APOSTROPHE);
             $kt->offsetSet("#",Lexer::T_HASH);
             $kt->offsetSet("\\",Lexer::T_ESCAPE);
+            $kt->offsetSet(" ",Lexer::T_SPACE);
+            $kt->offsetSet("\t", Lexer::T_SPACE);
+            // maybe these are not necessary
+            $kt->offsetSet("\f", Lexer::T_SPACE);
+            $kt->offsetSet("\b", Lexer::T_SPACE);
             Lexer::$_AllSingles = $kt;
         }
         return Lexer::$_AllSingles;
@@ -139,16 +132,16 @@ class Lexer
             $kt->offsetSet(Lexer::T_DOT,"/^(\\.)/");
             $kt->offsetSet(Lexer::T_UNQUOTED_KEY,"/^([-A-Z_a-z0-9]+)/");
             $kt->offsetSet(Lexer::T_ESCAPED_CHARACTER,
-                    "/^\\\\(n|t|r|f|b|\\\\|\\\"|u[0-9AaBbCcDdEeFf]{4,4}|U[0-9AaBbCcDdEeFf]{8,8})/");
-            $kt->offsetSet(Lexer::T_ESCAPE,"/^(\\\\)/");
+                    "/^\\\\(n|t|r|f|b|\\\\|\\\"|u[0-9A-Fa-f]{4,4}|U[0-9A-Fa-f]{8,8})/");
+            // ESCAPE \ would also be caught by LITERAL_STRING
+            $kt->offsetSet(Lexer::T_ESCAPE,"/^(\\\\)/"); 
+            // T_BASIC_UNESCAPED Leaves out " \    (0x22, 0x5C)
             $kt->offsetSet(Lexer::T_BASIC_UNESCAPED,
-                    "/^([\\x{20}-\\x{21}\\x{23}-\\x{26}\\x{28}-\\x{5A}\\x{5E}-\\x{10FFFF}]+)/u");
-            
-            // Literal strings are 'WYSIWYG', any printable character including # and " 
-            // This is superset of T_BASIC_UNESCAPED. Single quote is separate fetch.
-            // The only disallowed characters are control characters. 
+            "/^([^\\x{0}-\\x{19}\\x{22}\\x{5C}]+)/u");
+            // Literal strings are 'WYSIWYG'
+            // Single 'quote' (0x27) is separate fetch.
             $kt->offsetSet(Lexer::T_LITERAL_STRING,
-                    "/^([\\x{20}-\\x{26}\\x{28}-\\x{10FFFF}]+)/u");
+                    "/^([^\\x{0}-\\x{19}\\x{27}]+)/u");
             Lexer::$_AllRegExp = $kt;
         }
         return Lexer::$_AllRegExp;
@@ -158,7 +151,7 @@ class Lexer
     static public $BriefList = [
         Lexer::T_SPACE,
         Lexer::T_UNQUOTED_KEY,
-        Lexer::T_INTEGER,
+        Lexer::T_INTEGER
     ];
     static public $LiteralString = [
         Lexer::T_LITERAL_STRING
@@ -171,9 +164,7 @@ class Lexer
     ];
     // order is important, since T_INTEGER if first, will gazump T_FLOAT, T_DATE_TIME
     static public $FullList = [
-        Lexer::T_SPACE, Lexer::T_BOOLEAN, Lexer::T_DATE_TIME, Lexer::T_FLOAT, Lexer::T_INTEGER, 
-        Lexer::T_3_QUOTATION_MARK, Lexer::T_3_APOSTROPHE,
-        Lexer::T_UNQUOTED_KEY
+        Lexer::T_BOOLEAN, Lexer::T_DATE_TIME, Lexer::T_FLOAT, Lexer::T_INTEGER
     ];
 
     /**

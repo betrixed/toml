@@ -23,6 +23,18 @@ class ValueList implements Arrayable
     public $_list = [];
     protected $_tag;
 
+    public function allowType($type): bool {
+        if (empty($this->_type) && !empty($type)) {
+            return true;
+        }
+        else {
+            return ($type === $this->_type);
+        }
+    }
+    
+    public function getType() {
+        return $this->_type;
+    }
     public function setTag($any)
     {
         $this->_tag = $any;

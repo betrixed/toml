@@ -155,7 +155,98 @@ class TokenStream
         $this->lineCount = count($lines->_me);
         $this->curLine = ($this->lineCount > 0) ? $lines->_me[0] : null;
     }
-
+    
+    /** Return the single character at the front of the parse. 
+     *  Does not alter this objects internal state values,
+     *  except for properties of Token, which must be treated as read-only. 
+     *  Maybe can use this to 'predict' the next expression set to use.
+     *  Return "value" and single character TokenId in the Token.
+     *  Cannot return tokenId for multi-character regular expressions,
+     *  which is the whole idea.
+     */
+    public function peekToken() : Token {
+        // Put next characters in $test, not altering TokenStream state.
+        $test = $this->curLine;
+        $token = $this->token;
+        if (empty($test)) {
+            $nextLine = $this->lineNo + 1;
+            $token->line = $nextLine;
+            $token->isSingle = true;
+            if ($nextLine < $this->lineCount) {
+                $token->value = "";
+                $token->id = $this->newLineId;  
+            }
+            else {
+                $token->value = "";
+                $token->id = $this->eosId;
+            }
+            return $token;
+        }
+        $uni = mb_substr($test, 0, 1); // possible to be multi-byte character
+        $token->id = $this->singles->_store[$uni] ?? $this->unknownId;
+        $token->isSingle = ($this->id !== $this->unknownId);
+        $token->value = $uni;
+        $token->line = $this->tokenLine;
+        return $token;
+    }
+    
+    /**
+     * Try regular expression, and return capture, if any.
+     * Assumes previous peekToken returned a known token.
+     * Leaves tokenId as unknownId
+     * @param string $regex
+     */
+    public function moveRegex(string $pattern) : string {
+        $test = $this->curLine;
+        $matches = null;
+        if (preg_match($pattern, $test, $matches)) {
+            $this->value = $matches[1];
+            $this->isSingle = false;
+            $this->id = $this->unknownId;
+            $this->line = $this->tokenLine;
+            $takeOff = strlen($matches[0]);
+            $this->offset += $takeOff;
+            $this->curLine = substr($test, $takeOff);
+            return $this->value;
+        }   
+        return "";
+    }
+    /**
+     * If a peekNextChar has been done, this uses internal Token values to 
+     * advance the parse (namely the string length of the value),
+     * on the current line. It is important that token values have not been altered,
+     * and parse position has not been altered prior to calling this method.
+     * Returns the Id of the Token, as if returned from moveNextId.
+     * A call to getToken, will still return same values as the Token;
+     */
+    public function acceptToken() : int {
+        $token = $this->token;
+        if ($token->id === $this->eosId) {
+            $this->value = "";
+            $this->id = $this->eosId;
+            return $this->id;
+        }
+        elseif ($token->id === $this->newLineId) {
+            // do the next line
+            $nextLine = $this->lineNo + 1;
+            $this->curLine = $this->lines->_me[$nextLine];
+            $this->offset = 0;
+            $this->value = "";
+            $this->id = $this->newLineId;
+            $this->lineNo = $nextLine;
+            return $this->id;
+        }
+        if ($this->offset === 0) {
+            $this->tokenLine = $this->lineNo + 1;
+        }
+        $takeoff = strlen($token->value);
+        $this->curLine = substr($this->curLine, $takeoff);
+        $this->offset += $takeoff;
+        $this->id = $token->id;
+        $this->isSingle = $token->isSingle;
+        $this->value = $token->value;
+        return $this->id;
+    }
     /**
      * Set up the internal current token values, from the current parse
      * position in the line, and move the parse position to the next. Return
@@ -175,7 +266,7 @@ class TokenStream
             if ($nextLine < $this->lineCount) {
                 $this->curLine = $this->lines->_me[$nextLine];
                 $this->offset = 0;
-                $this->value = "\n";
+                $this->value = "";
                 $this->id = $this->newLineId;
                 $this->lineNo = $nextLine;
             } else {
