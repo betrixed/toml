@@ -25,12 +25,13 @@ class Parser
     // consts for parser expression tables
 
     const E_KEY = 0;
-    const E_VALUE = 1;
+    const E_SCALER = 1;
     const E_LSTRING = 2;
     const E_MLSTRING = 3;
     const E_BSTRING = 4;
     const E_ALL = 5;
-
+    
+    const IM_SPACE = "/(\\s+)/"; //immediate white space
     private $root; // root Table object
     private $table; // dyanamic reference to current Table object
     // For regex table stack
@@ -92,14 +93,14 @@ class Parser
             case Parser::E_KEY:
                 $result = Parser::$keyRegex;
                 if (empty($result)) {
-                    $result = Lexer::getExpSet(Lexer::$BriefList);
+                    $result = Lexer::getExpSet(Lexer::$KeyList);
                     Parser::$keyRegex = $result;
                 }
                 break;
-            case Parser::E_VALUE:
+            case Parser::E_SCALER:
                 $result = Parser::$valRegex;
                 if (empty($result)) {
-                    $result = Lexer::getExpSet(Lexer::$FullList);
+                    $result = Lexer::getExpSet(Lexer::$ScalerList);
                     Parser::$valRegex = $result;
                 }
                 break;
@@ -138,25 +139,26 @@ class Parser
     {
         $this->expSetId = $value;
         switch ($value) {
-            case Parser::E_VALUE:
-                $this->ts->setExpList(Parser::$valRegex);
-                break;
             case Parser::E_KEY:
-                $this->ts->setExpList(Parser::$keyRegex);
+                $obj = Parser::$keyRegex;
+                break;
+            case Parser::E_SCALER:
+                $obj = Parser::$valRegex;
                 break;
             case Parser::E_LSTRING:
-                $this->ts->setExpList(Parser::$regLString);
+                $obj = Parser::$regLString;
                 break;
             case Parser::E_BSTRING:
-                $this->ts->setExpList(Parser::$regEString);
+                $obj = Parser::$regEString;
                 break;
             case Parser::E_MLSTRING:
-                $this->ts->setExpList(Parser::$regMLString);
+                $obj = Parser::$regMLString;
                 break;
             default:
                 throw new XArrayable("Invalid expression set constant " . $value);
                 break;
         }
+        $this->ts->setExpSet($obj);
     }
 
     public function __construct()
@@ -169,7 +171,7 @@ class Parser
         $this->stackTop = 0;
 
         Parser::$keyRegex = $this->getExpSet(Parser::E_KEY);
-        Parser::$valRegex = $this->getExpSet(Parser::E_VALUE);
+        Parser::$valRegex = $this->getExpSet(Parser::E_SCALER);
         Parser::$regEString = $this->getExpSet(Parser::E_BSTRING);
         Parser::$regLString = $this->getExpSet(Parser::E_LSTRING);
         Parser::$regMLString = $this->getExpSet(Parser::E_MLSTRING);
@@ -271,7 +273,7 @@ class Parser
 
     /**
      * Skip comment, and return next none-comment token or NEWLINE or EOS
-     *  
+     * This exits with T_NEWLINE or T_EOS, and T_NEWLINE can be ignored 
      */
     private function parseComment(TokenStream $ts): int
     {
@@ -292,27 +294,13 @@ class Parser
     }
 
     /**
-     * Return next none-space token id
-     * @param TokenStream $ts
-     * @return int
-     */
-    private function skipSpace(TokenStream $ts): int
-    {
-        $tokenId = $ts->getTokenId();
-        if ($ts->getTokenId() === Lexer::T_SPACE) {
-            $tokenId = $ts->moveNextId();
-        }
-        return $tokenId;
-    }
-    /**
      *  predict and setup parse for simple value, using guess $tokenId
      */
     private function getSimpleValue(int $tokenId) {  
         $ts = $this->ts;
         if ($tokenId === Lexer::T_APOSTROPHE) {
             // 3 or 1 quote? [\\x{27}]{3,3}
-            $try3Q = $ts->moveRegex("/^(\\'\\'\\')/");
-            if (strlen($try3Q)==3) {
+            if ($ts->moveRegex("/^(\\'\\'\\')/") ){
                 $value = $this->parseMLString($ts);
             }
             else {
@@ -322,8 +310,7 @@ class Parser
             return $value;
         } elseif ($tokenId === Lexer::T_QUOTATION_MARK) {
             // 3 or 1 quote? [\\x{22}]{3,3}
-            $try3Q = $ts->moveRegex("/^(\\\"\\\"\\\")/");
-            if (strlen($try3Q)==3) {
+            if ($ts->moveRegex("/^(\\\"\\\"\\\")/") ) {
                 $value = $this->parseMLEscapeString($ts);
             }
             else {
@@ -332,7 +319,7 @@ class Parser
             }
             return $value;
         }
-        $this->pushExpSet(Parser::E_VALUE);
+        $this->pushExpSet(Parser::E_SCALER);
         // reject token Id and process regular expressions
         
         $tokenId = $ts->moveNextId();
@@ -358,33 +345,46 @@ class Parser
         return $value;
         
     }
+    
+    static private function valueWrap(string $s) : string {
+        return " value { " . $s . " }";
+    }
+    /**
+     * A call to expected regular expression failed,
+     * so find out what was there by using a more general 
+     * expression of space / something on rest of line
+     * @param string $msg
+     */
+    private function regexError(string $msg) {
+        $ts = $this->ts;
+        $msg .= " on line " . $ts->getLine();
+        if ($ts->moveRegex("/^(\\s*\\V*)/")) {
+            $value = $ts->getValue();
+            throw new XArrayable($msg . ", but got" . self::valueWrap($value));
+        }
+        else {
+            $tokenId = $ts->moveNextId();
+            $value = $ts->getValue();
+            $name = Lexer::tokenName($tokenId);
+            throw new XArrayable($msg . ", but got " . $name . self::valueWrap($value));
+        }
+        
+    }
     private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false): int
     {
         $keyName = $this->parseKeyName($ts);
         if ($this->table->offsetExists($keyName)) {
             $this->errorUniqueKey($keyName);
         }
-
-        // get next none-space token
-        $token = $ts->peekToken();
-        while($token->id === Lexer::T_SPACE) {
-            $ts->acceptToken();
-            $token = $ts->peekToken();
+        // Get an equals sign
+        if (!$ts->moveRegex("/^(\\s*=\\s*)/"))
+        {
+            // nothing moved what is actually there?
+            $this->regexError('Expected T_EQUAL (=)');
         }
-        if ($token->id !== Lexer::T_EQUAL) {
-            $this->throwTokenError($token, Lexer::T_EQUAL);
-        }
-        else {
-            $ts->acceptToken();
-            $token = $ts->peekToken();
-        }
-        while($token->id === Lexer::T_SPACE) {
-            $ts->acceptToken();
-            $token = $ts->peekToken();
-        }
-        // E_VALUE has a lot of regular expressions in fixed order.
+        // E_SCALER has a lot of regular expressions in fixed order.
         // Predict a smaller set to use, in micro - management style.
-
+        $token = $ts->peekToken();
         $tokenId = $token->id;
         if ($tokenId === Lexer::T_LEFT_SQUARE_BRACE) {
             $ts->acceptToken();
@@ -401,12 +401,11 @@ class Parser
             $this->table->offsetSet($keyName, $this->getSimpleValue($tokenId));
             
         }
-        
-        $tokenId = $ts->moveNextId(); // clear value parse ends
+
         if (!$isFromInlineTable) {
             return $this->finishLine($ts);
         } else {
-            return $tokenId;
+            return $ts->moveNextId();
         }
     }
 
@@ -565,11 +564,13 @@ class Parser
             if (($token->id === Lexer::T_NEWLINE) || ($token->id === Lexer::T_EOS)) {
                 $this->unexpectedTokenError($ts->getToken(), 'Incomplete literal string');
             }
-            $value = $ts->moveRegex("/([^\\x{0}-\\x{19}\\x{27}]+)/u");
-            if (empty($value)) {
+            if ($ts->moveRegex("/([^\\x{0}-\\x{19}\\x{27}]+)/u")) {
+                $result .= $ts->getValue();
+            }
+            else {
                 $this->unexpectedTokenError($token, "Bad literal string value");
             }
-            $result .= $value;
+            
             $token = $ts->peekToken();
         }
         $ts->acceptToken();
@@ -657,13 +658,14 @@ class Parser
         }
         $result = new ValueList();
 
-        // Now E_VALUE does not do space, so micro-manage space stuff
+        // E_SCALER no longer does space, so micro-manage space stuff
         $token = $ts->peekToken();
         $doLoop = true;
         while($doLoop) {
             switch($token->id) {
                 case Lexer::T_SPACE:
-                    $ts->moveRegex("/(\\s+)/");
+                    // swallow immediate space
+                    $ts->moveRegex(Parser::IM_SPACE);
                     $token = $ts->peekToken();
                     break;
                 case Lexer::T_NEWLINE:
@@ -715,6 +717,10 @@ class Parser
             {
                 switch($token->id) {
                     case Lexer::T_SPACE:
+                        // swallow immediate space
+                        $ts->moveRegex(Parser::IM_SPACE);
+                        $token = $ts->peekToken();
+                        break;
                     case Lexer::T_NEWLINE:
                         $ts->acceptToken();
                         $token = $ts->peekToken();
@@ -820,13 +826,12 @@ class Parser
      */
     private function finishLine(TokenStream $ts): int
     {
-        $tokenId = $ts->getTokenId();
-        if ($tokenId === Lexer::T_SPACE) {
-            $tokenId = $ts->moveNextId();
-        }
-        if ($tokenId === Lexer::T_HASH) {
-            $tokenId = $this->parseComment($ts);
-        }
+        // prior to this, the next token hasn't been consumed,
+        // so what is it?
+        
+        $ts->moveRegex("/^(\\s*#\\V*|\\s*)/");
+        $tokenId = $ts->moveNextId(); 
+        
         if ($tokenId !== Lexer::T_NEWLINE && $tokenId !== Lexer::T_EOS) {
             $this->unexpectedTokenError($ts->getToken(), 'Expected T_NEWLINE or T_EOS.');
         }
@@ -928,7 +933,7 @@ class Parser
                         $tokenId = $ts->moveNextId();
                         break;
                     } else {
-                        $tokenId = $ts->moveNextId();
+                        //$tokenId = $ts->moveNextId();
                         $doLoop = false;
                         break;
                     }
@@ -1087,7 +1092,10 @@ class Parser
                     $tokenId = $this->parseComment($ts);
                     break;
                 case Lexer::T_NEWLINE:
+                    $tokenId = $ts->moveNextId();
+                    break;
                 case Lexer::T_SPACE:
+                    $ts->moveRegex(Parser::IM_SPACE);
                     $tokenId = $ts->moveNextId();
                     break;
                 default:

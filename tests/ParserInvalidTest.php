@@ -41,7 +41,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_HASH at line 1 value { # }.  Expected T_EQUAL
+     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1, but got value { # = 1 }
      */
     public function testParseMustFailWhenKeyHash()
     {
@@ -50,7 +50,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_NEWLINE at line 1. Expected T_EQUAL
+     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1, but got 
      */
     public function testParseMustFailWhenKeyNewline()
     {
@@ -93,7 +93,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_CHAR at line 1 value { b }.  Expected T_EQUAL
+     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1, but got value {  b = 1 }
      */
     public function testParseMustFailWhenKeySpace()
     {
@@ -377,7 +377,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage  Syntax error: unexpected token T_CHAR at line 3 value { I }.  Value type expected
+     * @expectedExceptionMessage  Syntax error: unexpected token T_CHAR at line 1 value { I }.  Value type expected
      */
     public function testParseMustFailWhenAppearsTextInArray()
     {

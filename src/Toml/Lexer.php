@@ -148,24 +148,26 @@ class Lexer
     }
     // php retains an array insertion order, so order of these is signficant, 
     // and if it wasn't , it would need to be enforced by iterating these directly
-    static public $BriefList = [
+    static public $KeyList = [
         Lexer::T_SPACE,
         Lexer::T_UNQUOTED_KEY,
         Lexer::T_INTEGER
     ];
-    static public $LiteralString = [
-        Lexer::T_LITERAL_STRING
+    // order is important, since T_INTEGER  will gazump T_FLOAT, T_DATE_TIME
+    static public $ScalerList = [
+        Lexer::T_BOOLEAN, Lexer::T_DATE_TIME, Lexer::T_FLOAT, Lexer::T_INTEGER
     ];
     static public $BasicString = [
         Lexer::T_SPACE, Lexer::T_BASIC_UNESCAPED, Lexer::T_ESCAPED_CHARACTER, Lexer::T_3_QUOTATION_MARK,
     ];
+    static public $LiteralString = [
+        Lexer::T_LITERAL_STRING
+    ];
+    
     static public $LiteralMLString = [
         Lexer::T_LITERAL_STRING, Lexer::T_3_APOSTROPHE,
     ];
-    // order is important, since T_INTEGER if first, will gazump T_FLOAT, T_DATE_TIME
-    static public $FullList = [
-        Lexer::T_BOOLEAN, Lexer::T_DATE_TIME, Lexer::T_FLOAT, Lexer::T_INTEGER
-    ];
+    
 
     /**
      * Basic lexer testing of all regular expression parsing
@@ -177,7 +179,7 @@ class Lexer
         // clone each from the stream
 
         $stream = new TokenStream();
-        $stream->setExpList(Lexer::getAllRegex());
+        $stream->setExpSet(Lexer::getAllRegex());
         $stream->setSingles(Lexer::getAllSingles());
         $stream->setUnknownId(Lexer::T_CHAR);
         $stream->setNewLineId(Lexer::T_NEWLINE);

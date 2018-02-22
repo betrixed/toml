@@ -67,20 +67,22 @@ class TokenStream
         $this->unknownId = $id;
     }
 
-    /**
-     * Argument is reference to associative array[int] of string regular expressions
-     * @param array $ref
-     */
-    public function setExpList(KeyTable $ref)
-    {
-        $this->regex = $ref;
-    }
+   
 
     /**
      * Return current expression set object
      */
-    public function getExpMap() {
+    public function getExpSet() {
         return $this->regex;
+    }
+    
+     /**
+     * Argument is reference to associative array[int] of string regular expressions
+     * @param array $ref
+     */
+    public function setExpSet(KeyTable $ref)
+    {
+        $this->regex = $ref;
     }
     /**
      * For lookup of tokenId of single character string
@@ -196,35 +198,34 @@ class TokenStream
      * Leaves tokenId as unknownId
      * @param string $regex
      */
-    public function moveRegex(string $pattern) : string {
+    public function moveRegex(string $pattern) : bool {
         $test = $this->curLine;
         $matches = null;
         if (preg_match($pattern, $test, $matches)) {
             $this->value = $matches[1];
             $this->isSingle = false;
             $this->id = $this->unknownId;
-            $this->line = $this->tokenLine;
             $takeOff = strlen($matches[0]);
             $this->offset += $takeOff;
             $this->curLine = substr($test, $takeOff);
-            return $this->value;
+            return true;
         }   
-        return "";
+        return false;
     }
     /**
      * If a peekNextChar has been done, this uses internal Token values to 
      * advance the parse (namely the string length of the value),
      * on the current line. It is important that token values have not been altered,
      * and parse position has not been altered prior to calling this method.
-     * Returns the Id of the Token, as if returned from moveNextId.
+     * 
      * A call to getToken, will still return same values as the Token;
      */
-    public function acceptToken() : int {
+    public function acceptToken()  {
         $token = $this->token;
         if ($token->id === $this->eosId) {
             $this->value = "";
             $this->id = $this->eosId;
-            return $this->id;
+            return;
         }
         elseif ($token->id === $this->newLineId) {
             // do the next line
@@ -234,7 +235,7 @@ class TokenStream
             $this->value = "";
             $this->id = $this->newLineId;
             $this->lineNo = $nextLine;
-            return $this->id;
+            return;
         }
         if ($this->offset === 0) {
             $this->tokenLine = $this->lineNo + 1;
@@ -245,7 +246,7 @@ class TokenStream
         $this->id = $token->id;
         $this->isSingle = $token->isSingle;
         $this->value = $token->value;
-        return $this->id;
+        return;
     }
     /**
      * Set up the internal current token values, from the current parse
