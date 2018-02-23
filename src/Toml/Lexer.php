@@ -46,10 +46,9 @@ class Lexer
     const T_LITERAL_STRING = 24;
     const T_CHAR = 25;
     const T_LAST_TOKEN = 25; // for range values of token lookup
-    
     const TOML_VERSION = "0.4";
     const USE_VERSION = "Interpreted";
-    
+
     static private $nameSet = [
         'T_BAD', //0
         'T_EQUAL', //1
@@ -78,30 +77,29 @@ class Lexer
         'T_LITERAL_STRING', //24
         'T_CHAR', // 25
     ];
-    
     // for particular tests, Lexer::T_BASIC_UNESCAPED must be last
     // and single character expressions first.
     // otherwise keep them out of the way.
     static private $_AllRegExp;
     static private $_AllSingles;
-    
-    
-    static public function getAllSingles(): KeyTable {
+
+    static public function getAllSingles(): KeyTable
+    {
         if (empty(Lexer::$_AllSingles)) {
             $kt = new KeyTable();
-            $kt->offsetSet("=",Lexer::T_EQUAL);
-            $kt->offsetSet("[",Lexer::T_LEFT_SQUARE_BRACE);
-            $kt->offsetSet("]",Lexer::T_RIGHT_SQUARE_BRACE);
-            $kt->offsetSet(".",Lexer::T_DOT);
-            $kt->offsetSet(",",Lexer::T_COMMA);
-            $kt->offsetSet("\"",Lexer::T_QUOTATION_MARK);
-            $kt->offsetSet(".",Lexer::T_DOT);
-            $kt->offsetSet("{",Lexer::T_LEFT_CURLY_BRACE);
-            $kt->offsetSet("}",Lexer::T_RIGHT_CURLY_BRACE);
-            $kt->offsetSet("'",Lexer::T_APOSTROPHE);
-            $kt->offsetSet("#",Lexer::T_HASH);
-            $kt->offsetSet("\\",Lexer::T_ESCAPE);
-            $kt->offsetSet(" ",Lexer::T_SPACE);
+            $kt->offsetSet("=", Lexer::T_EQUAL);
+            $kt->offsetSet("[", Lexer::T_LEFT_SQUARE_BRACE);
+            $kt->offsetSet("]", Lexer::T_RIGHT_SQUARE_BRACE);
+            $kt->offsetSet(".", Lexer::T_DOT);
+            $kt->offsetSet(",", Lexer::T_COMMA);
+            $kt->offsetSet("\"", Lexer::T_QUOTATION_MARK);
+            $kt->offsetSet(".", Lexer::T_DOT);
+            $kt->offsetSet("{", Lexer::T_LEFT_CURLY_BRACE);
+            $kt->offsetSet("}", Lexer::T_RIGHT_CURLY_BRACE);
+            $kt->offsetSet("'", Lexer::T_APOSTROPHE);
+            $kt->offsetSet("#", Lexer::T_HASH);
+            $kt->offsetSet("\\", Lexer::T_ESCAPE);
+            $kt->offsetSet(" ", Lexer::T_SPACE);
             $kt->offsetSet("\t", Lexer::T_SPACE);
             // maybe these are not necessary
             $kt->offsetSet("\f", Lexer::T_SPACE);
@@ -110,42 +108,42 @@ class Lexer
         }
         return Lexer::$_AllSingles;
     }
-    static public function getAllRegex() : KeyTable{
+
+    static public function getAllRegex(): KeyTable
+    {
         if (empty(Lexer::$_AllRegExp)) {
             $kt = new KeyTable();
-            $kt->offsetSet(Lexer::T_EQUAL,"/^(=)/");
-            $kt->offsetSet(Lexer::T_BOOLEAN,"/^(true|false)/");
-            $kt->offsetSet(Lexer::T_DATE_TIME,"/^(\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)/");
-            $kt->offsetSet(Lexer::T_FLOAT,"/^([+-]?((((\\d_?)+[\\.]?(\\d_?)*)[eE][+-]?(\\d_?)+)|((\\d_?)+[\\.](\\d_?)+)))/");
-            $kt->offsetSet(Lexer::T_INTEGER,"/^([+-]?(\\d_?)+)/");
-            $kt->offsetSet(Lexer::T_3_QUOTATION_MARK,"/^(\"\"\")/");
-            $kt->offsetSet(Lexer::T_QUOTATION_MARK,"/^(\")/");
-            $kt->offsetSet(Lexer::T_3_APOSTROPHE,"/^(\'\'\')/");
-            $kt->offsetSet(Lexer::T_APOSTROPHE,"/^(\')/");
-            $kt->offsetSet(Lexer::T_HASH,"/^(#)/");
-            $kt->offsetSet(Lexer::T_SPACE,"/^(\\s+)/");
-            $kt->offsetSet(Lexer::T_LEFT_SQUARE_BRACE,"/^(\\[)/");
-            $kt->offsetSet(Lexer::T_RIGHT_SQUARE_BRACE,"/^(\\])/");
-            $kt->offsetSet(Lexer::T_LEFT_CURLY_BRACE,"/^(\\{)/");
-            $kt->offsetSet(Lexer::T_RIGHT_CURLY_BRACE,"/^(\\})/");
-            $kt->offsetSet(Lexer::T_COMMA,"/^(,)/");
-            $kt->offsetSet(Lexer::T_DOT,"/^(\\.)/");
-            $kt->offsetSet(Lexer::T_UNQUOTED_KEY,"/^([-A-Z_a-z0-9]+)/");
-            $kt->offsetSet(Lexer::T_ESCAPED_CHARACTER,
-                    "/^\\\\(n|t|r|f|b|\\\\|\\\"|u[0-9A-Fa-f]{4,4}|U[0-9A-Fa-f]{8,8})/");
+            $kt->offsetSet(Lexer::T_EQUAL, "/^(=)/");
+            $kt->offsetSet(Lexer::T_BOOLEAN, "/^(true|false)/");
+            $kt->offsetSet(Lexer::T_DATE_TIME, "/^(\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)/");
+            $kt->offsetSet(Lexer::T_FLOAT, "/^([+-]?((((\\d_?)+[\\.]?(\\d_?)*)[eE][+-]?(\\d_?)+)|((\\d_?)+[\\.](\\d_?)+)))/");
+            $kt->offsetSet(Lexer::T_INTEGER, "/^([+-]?(\\d_?)+)/");
+            $kt->offsetSet(Lexer::T_3_QUOTATION_MARK, "/^(\"\"\")/");
+            $kt->offsetSet(Lexer::T_QUOTATION_MARK, "/^(\")/");
+            $kt->offsetSet(Lexer::T_3_APOSTROPHE, "/^(\'\'\')/");
+            $kt->offsetSet(Lexer::T_APOSTROPHE, "/^(\')/");
+            $kt->offsetSet(Lexer::T_HASH, "/^(#)/");
+            $kt->offsetSet(Lexer::T_SPACE, "/^(\\s+)/");
+            $kt->offsetSet(Lexer::T_LEFT_SQUARE_BRACE, "/^(\\[)/");
+            $kt->offsetSet(Lexer::T_RIGHT_SQUARE_BRACE, "/^(\\])/");
+            $kt->offsetSet(Lexer::T_LEFT_CURLY_BRACE, "/^(\\{)/");
+            $kt->offsetSet(Lexer::T_RIGHT_CURLY_BRACE, "/^(\\})/");
+            $kt->offsetSet(Lexer::T_COMMA, "/^(,)/");
+            $kt->offsetSet(Lexer::T_DOT, "/^(\\.)/");
+            $kt->offsetSet(Lexer::T_UNQUOTED_KEY, "/^([-A-Z_a-z0-9]+)/");
+            $kt->offsetSet(Lexer::T_ESCAPED_CHARACTER, "/^\\\\(n|t|r|f|b|\\\\|\\\"|u[0-9A-Fa-f]{4,4}|U[0-9A-Fa-f]{8,8})/");
             // ESCAPE \ would also be caught by LITERAL_STRING
-            $kt->offsetSet(Lexer::T_ESCAPE,"/^(\\\\)/"); 
+            $kt->offsetSet(Lexer::T_ESCAPE, "/^(\\\\)/");
             // T_BASIC_UNESCAPED Leaves out " \    (0x22, 0x5C)
-            $kt->offsetSet(Lexer::T_BASIC_UNESCAPED,
-            "/^([^\\x{0}-\\x{19}\\x{22}\\x{5C}]+)/u");
+            $kt->offsetSet(Lexer::T_BASIC_UNESCAPED, "/^([^\\x{0}-\\x{19}\\x{22}\\x{5C}]+)/u");
             // Literal strings are 'WYSIWYG'
             // Single 'quote' (0x27) is separate fetch.
-            $kt->offsetSet(Lexer::T_LITERAL_STRING,
-                    "/^([^\\x{0}-\\x{19}\\x{27}]+)/u");
+            $kt->offsetSet(Lexer::T_LITERAL_STRING, "/^([^\\x{0}-\\x{19}\\x{27}]+)/u");
             Lexer::$_AllRegExp = $kt;
         }
         return Lexer::$_AllRegExp;
     }
+
     // php retains an array insertion order, so order of these is signficant, 
     // and if it wasn't , it would need to be enforced by iterating these directly
     static public $KeyList = [
@@ -155,19 +153,19 @@ class Lexer
     ];
     // order is important, since T_INTEGER  will gazump T_FLOAT, T_DATE_TIME
     static public $ScalerList = [
-        Lexer::T_BOOLEAN, Lexer::T_DATE_TIME, Lexer::T_FLOAT, Lexer::T_INTEGER
+        Lexer::T_BOOLEAN, Lexer::T_DATE_TIME,
+        Lexer::T_FLOAT, Lexer::T_INTEGER
     ];
     static public $BasicString = [
-        Lexer::T_SPACE, Lexer::T_BASIC_UNESCAPED, Lexer::T_ESCAPED_CHARACTER, Lexer::T_3_QUOTATION_MARK,
+        Lexer::T_SPACE, Lexer::T_BASIC_UNESCAPED,
+        Lexer::T_ESCAPED_CHARACTER, Lexer::T_3_QUOTATION_MARK,
     ];
     static public $LiteralString = [
         Lexer::T_LITERAL_STRING
     ];
-    
     static public $LiteralMLString = [
         Lexer::T_LITERAL_STRING, Lexer::T_3_APOSTROPHE,
     ];
-    
 
     /**
      * Basic lexer testing of all regular expression parsing
@@ -202,26 +200,31 @@ class Lexer
         }
         return self::$nameSet[$tokenId];
     }
-    
-    static public function getTomlVersion() : string {
+
+    static public function getTomlVersion(): string
+    {
         return Lexer::TOML_VERSION;
     }
-    
-    static public function getUseVersion() : string {
+
+    static public function getUseVersion(): string
+    {
         return Lexer::USE_VERSION;
     }
+
     /** return a KeyTable with expressions selected by $idList
      * 
      * @param array $idList
      * @return KeyTable
      */
-    static public function getExpSet(array $idList) {
+    static public function getExpSet(array $idList)
+    {
         $all = Lexer::getAllRegex();
-        
+
         $result = new KeyTable();
-        foreach($idList as $id) {
+        foreach ($idList as $id) {
             $result->offsetSet($id, $all->offsetGet($id));
         }
         return $result;
     }
+
 }

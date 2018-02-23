@@ -265,7 +265,7 @@ class Parser
                     $tokenId = $ts->moveNextId();
                     break;
                 default:
-                    $this->unexpectedTokenError($ts->getToken(), 'Expect Key = , [Path] or # Comment');
+                    $this->syntaxError("Expect Key = , [Path] or # Comment", $ts->getToken());
                     break;
             }
         }
@@ -277,19 +277,8 @@ class Parser
      */
     private function parseComment(TokenStream $ts): int
     {
-        $tokenId = $ts->getTokenId();
-        if ($tokenId != Lexer::T_HASH) {
-            $this->throwTokenError($ts->getToken(), $tokenId);
-        }
-        // parsing a comment so use literal string expression set
-        $this->pushExpSet(Parser::E_LSTRING);
-        while (true) {
-            $tokenId = $ts->moveNextId();
-            if ($tokenId === Lexer::T_NEWLINE || $tokenId === Lexer::T_EOS) {
-                break;
-            }
-        }
-        $this->popExpSet();
+        $ts->moveRegex("/^(\\V*)/");
+        $tokenId = $ts->moveNextId();
         return $tokenId;
     }
 
@@ -325,7 +314,7 @@ class Parser
         $tokenId = $ts->moveNextId();
         switch ($tokenId) {
             case Lexer::T_BOOLEAN:
-                $value = $ts->getValue() == 'true' ? true : false;
+                $value = $ts->getValue() == "true" ? true : false;
                 break;
             case Lexer::T_INTEGER:
                 $value = $this->parseInteger($ts);
@@ -337,8 +326,7 @@ class Parser
                 $value = $this->parseDatetime($ts);
                 break;
             default:
-                $this->unexpectedTokenError($ts->getToken(), 'Value type expected'
-                );
+                $this->syntaxError("Value type expected", $ts->getToken());
                 break;
         }
         $this->popExpSet();
@@ -347,7 +335,8 @@ class Parser
     }
     
     static private function valueWrap(string $s) : string {
-        return " value { " . $s . " }";
+        //$s = addslashes($s);
+        return ". Value { " . $s . " }.";
     }
     /**
      * A call to expected regular expression failed,
@@ -360,21 +349,20 @@ class Parser
         $msg .= " on line " . $ts->getLine();
         if ($ts->moveRegex("/^(\\s*\\V*)/")) {
             $value = $ts->getValue();
-            throw new XArrayable($msg . ", but got" . self::valueWrap($value));
+            throw new XArrayable($msg . self::valueWrap($value));
         }
         else {
             $tokenId = $ts->moveNextId();
             $value = $ts->getValue();
             $name = Lexer::tokenName($tokenId);
-            throw new XArrayable($msg . ", but got " . $name . self::valueWrap($value));
+            throw new XArrayable($msg . ". Got " . $name . self::valueWrap($value));
         }
-        
     }
     private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false): int
     {
         $keyName = $this->parseKeyName($ts);
         if ($this->table->offsetExists($keyName)) {
-            $this->errorUniqueKey($keyName);
+            $this->syntaxError("Duplicate key", $ts->getToken());
         }
         // Get an equals sign
         if (!$ts->moveRegex("/^(\\s*=\\s*)/"))
@@ -422,7 +410,7 @@ class Parser
             case Lexer::T_INTEGER :
                 return (string) $this->parseInteger($ts);
             default:
-                $this->unexpectedTokenError($ts->getToken(), 'Improper key');
+                $this->syntaxError("Improper key", $ts->getToken());
                 break;
         }
     }
@@ -441,7 +429,7 @@ class Parser
 
         if (preg_match("/^0\\d+/", $value)) {
             $this->syntaxError(
-                    "Invalid integer number: leading zeros are not allowed.", $ts->getToken()
+                    "Invalid integer number: leading zeros are not allowed", $ts->getToken()
             );
         }
 
@@ -462,7 +450,7 @@ class Parser
 
         if (preg_match("/^0\\d+/", $value)) {
             $this->syntaxError(
-                    "Invalid float number: leading zeros are not allowed.", $ts->getToken()
+                    "Invalid float number: leading zeros are not allowed", $ts->getToken()
             );
         }
 
@@ -476,12 +464,9 @@ class Parser
      */
     private function parseEscapeString(TokenStream $ts): string
     {
+        // Removed assert got a 1 quotation mark
         $this->pushExpSet(Parser::E_BSTRING);
 
-        $tokenId = $ts->getTokenId();
-        if ($tokenId !== Lexer::T_QUOTATION_MARK) {
-            $this->throwTokenError($ts->getToken(), Lexer::T_QUOTATION_MARK);
-        }
 
         $tokenId = $ts->moveNextId();
         $result = "";
@@ -489,7 +474,7 @@ class Parser
             if (($tokenId === Lexer::T_NEWLINE) || ($tokenId === Lexer::T_EOS) || ($tokenId
                     === Lexer::T_ESCAPE)) {
                 // throws
-                $this->unexpectedTokenError($ts->getToken(), 'This character is not valid.');
+                $this->syntaxError("Unfinished string value", $ts->getToken());
             } elseif ($tokenId === Lexer::T_ESCAPED_CHARACTER) {
                 $value = $this->parseEscapedCharacter($ts);
             } else {
@@ -562,13 +547,13 @@ class Parser
         $token = $ts->peekToken();
         while ($token->id !== Lexer::T_APOSTROPHE) {
             if (($token->id === Lexer::T_NEWLINE) || ($token->id === Lexer::T_EOS)) {
-                $this->unexpectedTokenError($ts->getToken(), 'Incomplete literal string');
+                $this->syntaxError("Incomplete literal string", $ts->getToken());
             }
             if ($ts->moveRegex("/([^\\x{0}-\\x{19}\\x{27}]+)/u")) {
                 $result .= $ts->getValue();
             }
             else {
-                $this->unexpectedTokenError($token, "Bad literal string value");
+                $this->syntaxError("Bad literal string value",$token);
             }
             
             $token = $ts->peekToken();
@@ -597,7 +582,7 @@ class Parser
                     $doLoop = false;
                     break;
                 case Lexer::T_EOS:
-                    $this->unexpectedTokenError($ts->getToken(), 'Expected token "T_3_APOSTROPHE".');
+                    $this->syntaxError("Expected token { ''' }", $ts->getToken());
                     break;
                 default:
                     $result .= $ts->getValue();
@@ -613,30 +598,48 @@ class Parser
     {
         $value = $ts->getValue();
 
-        switch ($value) {
-            case 'b':
-                return "\b";
-            case 't':
-                return "\t";
-            case 'n':
-                return "\n";
-            case 'f':
-                return "\f";
-            case 'r':
-                return "\r";
-            case '"':
-                return "\"";
-            case '\\':
-                return "\\";
+        if (strlen($value) == 1) 
+        {
+            switch ($value) {
+                case 'n':
+                    $result =  "\n";
+                    break;              
+                
+                case 't':
+                    $result =  "\t";
+                    break;
+                case 'r':
+                    $result =  "\r";
+                    break;
+                case 'b':
+                    $result = "\b";
+                    break;
+                case 'f':
+                    $result =  "\f";
+                    break;
+                case '"':
+                    $result =  "\"";
+                    break;
+                case '\\':
+                    $result = "\\";
+                    break;
+                default:
+                    throw new XArrayable("Invalid escape line " . $ts->getLine() . " \\" . $value);
+            }
         }
-
-        if (strlen($value) === 5) {
-            return json_decode('"\\' . $value . '"');
+        elseif (strlen($value) === 5) {
+            $result = json_decode('"\\' . $value . '"');
         }
-        $matches = null;
-        preg_match("/U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/", $value, $matches);
-
-        return json_decode('"\u' . $matches[1] . '\u' . $matches[2] . '"');
+        else {
+            $matches = null;
+            if (preg_match("/U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/", $value, $matches)) {
+                $result = json_decode('"\u' . $matches[1] . '\u' . $matches[2] . '"');
+            }
+            else {
+                throw new XArrayable("Fail unicode match " . $ts->getLine() . " \\" . $value);
+            }
+        }
+        return $result;
     }
 
     private function parseDatetime(TokenStream $ts): \Datetime
@@ -742,8 +745,6 @@ class Parser
                         break;
                     case Lexer::T_RIGHT_SQUARE_BRACE:
                         $ts->acceptToken();
-                        $doLoop = false;
-                        break;
                     default:
                         $doLoop = false;
                         break;
@@ -833,7 +834,7 @@ class Parser
         $tokenId = $ts->moveNextId(); 
         
         if ($tokenId !== Lexer::T_NEWLINE && $tokenId !== Lexer::T_EOS) {
-            $this->unexpectedTokenError($ts->getToken(), 'Expected T_NEWLINE or T_EOS.');
+            $this->syntaxError("Expected NEWLINE or EOS",$ts->getToken());
         }
         return $tokenId;
     }
@@ -842,13 +843,6 @@ class Parser
     {
         $token = $this->ts->getToken();
         $msg .= " at line " . $token->line;
-        throw new XArrayable($msg);
-    }
-
-    private function tablePathClash($orig, $pf)
-    {
-        $msg = "Table path [" . $pf->key . "] at line " . $pf->line
-                . " interferes with path at line " . $orig->line;
         throw new XArrayable($msg);
     }
 
@@ -1075,7 +1069,7 @@ class Parser
     private function throwTokenError($token, int $expectedId)
     {
         $tokenName = Lexer::tokenName($expectedId);
-        $this->unexpectedTokenError($token, "Expected $tokenName");
+        $this->syntaxError("Expected " . $tokenName, $token);
     }
 
     /**
@@ -1113,56 +1107,21 @@ class Parser
         ));
     }
 
-    /**
-     * Return true if key was already set
-     * Usage controlled by $this->useKeyStore
-     * @param string $keyName
-     * @return bool
-     */
-    private function setUniqueKey(string $keyName): bool
-    {
-        if (isset($this->keys[$keyName])) {
-            return false;
-        }
-        $this->keys[$keyName] = true;
-        return true;
-    }
-
-    private function unexpectedTokenError(Token $token, string $expectedMsg): void
+    private function syntaxError($msg, Token $token): void
     {
         $name = Lexer::tokenName($token->id);
         $line = $token->line;
         $value = $token->value;
 
-        $msg = sprintf('Syntax error: unexpected token %s at line %s', $name, $line);
+        $msg = "Error line " . $line . ": " . $msg;
 
         if (strlen($value) > 0) {
-             $msg .= " value { " . $value . " }. ";
+             $msg = $msg . self::valueWrap($value);
         }
         else {
             $msg .= '.';
         }
-        if (!empty($expectedMsg)) {
-            $msg = $msg . ' ' . $expectedMsg;
-        }
 
-        throw new XArrayable($msg);
-    }
-
-    private function syntaxError($msg, Token $token = null): void
-    {
-        if ($token !== null) {
-            $name = Lexer::tokenName($token->id);
-            $line = $token->line;
-            $value = $token->value;
-            $tokenMsg = sprintf('Token: %s line: %s', $name, $line);
-            if (!$token->isSingle) {
-                $tokenMsg .= " value { '" . $value . "' }.";
-            } else {
-                $tokenMsg .= '.';
-            }
-            $msg .= ' ' . $tokenMsg;
-        }
         throw new XArrayable($msg);
     }
 

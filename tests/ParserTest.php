@@ -161,10 +161,10 @@ toml;
 
         $array = $this->parser->parse($toml);
         $this->assertEquals([
-            'backspace' => "This string has a \b backspace character.",
+            'backspace' => "This string has a " . chr(8) . " backspace character.",
             'tab' => "This string has a \t tab character.",
             'newline' => "This string has a \n new line character.",
-            'formfeed' => "This string has a \f form feed character.",
+            'formfeed' => "This string has a " . chr(12) . " form feed character.",
             'carriage' => "This string has a \r carriage return character.",
             'quote' => 'This string has a " quote character.',
             'backslash' => 'This string has a \\ backslash character.',

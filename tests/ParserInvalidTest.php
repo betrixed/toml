@@ -32,7 +32,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_EQUAL at line 1 value { = }.  Expect Key = , [Path] or # Comment
+     * @expectedExceptionMessage Error line 1: Expect Key = , [Path] or # Comment. Value { = }.
      */
     public function testKeyEmpty()
     {
@@ -41,7 +41,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1, but got value { # = 1 }
+     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1. Value { # = 1 }.
      */
     public function testParseMustFailWhenKeyHash()
     {
@@ -50,7 +50,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1, but got 
+     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1. Value {  }. 
      */
     public function testParseMustFailWhenKeyNewline()
     {
@@ -59,7 +59,7 @@ class ParserInvalidTest extends TestCase
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage The key { dupe } has already been defined previously.
+     * @expectedExceptionMessage Error line 2: Duplicate key. Value { dupe }.
      */
     public function testDuplicateKeys()
     {
@@ -93,7 +93,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1, but got value {  b = 1 }
+     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1. Value {  b = 1 }
      */
     public function testParseMustFailWhenKeySpace()
     {
@@ -112,7 +112,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_EQUAL at line 1 value { = }.  Value type expected
+     * @expectedExceptionMessage Error line 1: Value type expected. Value { = }.
      */
     public function testParseMustFailWhenKeyTwoEquals()
     {
@@ -121,7 +121,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { the }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { the }.
      */
     public function testParseMustFailWhenTextAfterInteger()
     {
@@ -130,7 +130,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Invalid integer number: leading zeros are not allowed. Token: T_INTEGER line: 1 value { '042' }.
+     * @expectedExceptionMessage Error line 1: Invalid integer number: leading zeros are not allowed. Value { 042 }.
      */
     public function testParseMustFailWhenIntegerLeadingZeros()
     {
@@ -139,7 +139,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_CHAR at line 1 value { _ }.  Value type expected
+     * @expectedExceptionMessage Error line 1: Value type expected. Value { _ }.
      */
     public function testParseMustFailWhenIntegerLeadingUnderscore()
     {
@@ -148,7 +148,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Invalid integer number: underscore must be surrounded by at least one digit Token: T_INTEGER line: 1 value { '42_' }.
+     * @expectedExceptionMessage Error line 1: Invalid integer number: underscore must be surrounded by at least one digit. Value { 42_ }.
      */
     public function testParseMustFailWhenIntegerFinalUnderscore()
     {
@@ -157,7 +157,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Invalid integer number: leading zeros are not allowed. Token: T_INTEGER line: 1 value { '0_42' }.
+     * @expectedExceptionMessage Error line 1: Invalid integer number: leading zeros are not allowed. Value { 0_42 }.
      */
     public function testParseMustFailWhenIntegerLeadingZerosWithUnderscore()
     {
@@ -166,7 +166,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_DOT at line 1 value { . }.  Value type expected
+     * @expectedExceptionMessage Error line 1: Value type expected. Value { . }.
      */
     public function testParseMustFailWhenFloatNoLeadingZero()
     {
@@ -180,7 +180,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_DOT at line 1 value { . }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { . }.
      */
     public function testParseMustFailWhenFloatNoTrailingDigits()
     {
@@ -194,7 +194,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_CHAR at line 1 value { _ }.  Value type expected
+     * @expectedExceptionMessage Error line 1: Value type expected. Value { _ }.
      */
     public function testParseMustFailWhenFloatLeadingUnderscore()
     {
@@ -203,7 +203,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Invalid float number: underscore must be surrounded by at least one digit Token: T_FLOAT line: 1 value { '1.01_' }.
+     * @expectedExceptionMessage Error line 1: Invalid float number: underscore must be surrounded by at least one digit. Value { 1.01_ }.
      */
     public function testParseMustFailWhenFloatFinalUnderscore()
     {
@@ -212,7 +212,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Invalid float number: underscore must be surrounded by at least one digit Token: T_FLOAT line: 1 value { '1_e6' }.
+     * @expectedExceptionMessage Error line 1: Invalid float number: underscore must be surrounded by at least one digit. Value { 1_e6 }.
      */
     public function testParseMustFailWhenFloatUnderscorePrefixE()
     {
@@ -221,7 +221,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { e_6 }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { e_6 }.
      */
     public function testParseMustFailWhenFloatUnderscoreSuffixE()
     {
@@ -230,7 +230,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { -7-05T17 }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { -7-05T17 }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoLeads()
     {
@@ -239,7 +239,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { T17 }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { T17 }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoSecs()
     {
@@ -248,7 +248,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { 17 }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { 17 }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoT()
     {
@@ -257,7 +257,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { -07-5T17 }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { -07-5T17 }.
      */
     public function testParseMustFailWhenDatetimeMalformedWithMilli()
     {
@@ -266,7 +266,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_ESCAPE at line 1 value { \ }.  This character is not valid.
+     * @expectedExceptionMessage Error line 1: Unfinished string value. Value { \ }.
      */
     public function testParseMustFailWhenBasicStringHasBadByteEscape()
     {
@@ -275,7 +275,8 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_ESCAPE at line 1 value { \ }.  This character is not valid.
+     * @expectedExceptionMessage Error line 1: Unfinished string value. Value { \ }.
+     * 
      */
     public function testParseMustFailWhenBasicStringHasBadEscape()
     {
@@ -284,7 +285,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_ESCAPE at line 1 value { \ }.  This character is not valid.
+     * @expectedExceptionMessage Error line 1: Unfinished string value. Value { \ }.
      */
     public function testParseMustFailWhenBasicStringHasByteEscapes()
     {
@@ -293,7 +294,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_EOS at line 1. This character is not valid
+     * @expectedExceptionMessage Error line 1: Unfinished string value.
      */
     public function testParseMustFailWhenBasicStringIsNotClose()
     {
@@ -302,7 +303,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { No }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { No }.
      */
     public function testParseMustFailWhenThereIsTextAfterBasicString()
     {
@@ -345,7 +346,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_CHAR at line 1 value { N }.  Value type expected
+     * @expectedExceptionMessage Error line 1: Value type expected. Value { N }.
      */
     public function testParseMustFailWhenAppearsTextAfterArrayEntries()
     {
@@ -361,7 +362,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_CHAR at line 1 value { N }.  Value type expected
+     * @expectedExceptionMessage Error line 1: Value type expected. Value { N }.
      */
     public function testParseMustFailWhenAppearsTextBeforeArraySeparator()
     {
@@ -377,7 +378,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage  Syntax error: unexpected token T_CHAR at line 1 value { I }.  Value type expected
+     * @expectedExceptionMessage  Error line 1: Value type expected. Value { I }.
      */
     public function testParseMustFailWhenAppearsTextInArray()
     {
@@ -461,7 +462,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { this }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { this }.
      */
     public function testParseMustFailWhenTextAfterTable()
     {
@@ -484,7 +485,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_UNQUOTED_KEY at line 1 value { b }.  Expected T_NEWLINE or T_EOS.
+     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { b }.
      */
     public function testParseMustFailWhenTableNestedBracketsClose()
     {
@@ -497,7 +498,7 @@ toml;
 
     /**
      * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Syntax error: unexpected token T_NEWLINE at line 1. Improper key
+     * @expectedExceptionMessage Error line 1: Improper key.
      */
     public function testParseMustFailWhenInlineTableWithNewline()
     {
