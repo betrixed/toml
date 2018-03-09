@@ -8,6 +8,9 @@
 
 namespace Toml;
 
+use Pun\Pun8;
+use Pun\Re8map;
+use Pun\Recap8;
 
 /**
  * Description of TokenStream
@@ -17,17 +20,15 @@ namespace Toml;
  */
 class TokenStream
 {
-
-    protected $lines; // all lines
-    protected $lineCount;
-    protected $curLine;
+    
+    protected $input; // Pun8 class
     protected $id;
+    protected $caps;  // Recap8 class for matches
     protected $value;
-    protected $lineNo;    // line number of curLine
+    protected $flagLine;
     protected $tokenLine;  // line number of current token
     protected $isSingle; // was found in single character list
-    protected $offset; // unparsed offset on current line
-    protected $regex; // Object of type KeyTable to current set of tokens being searched for
+    protected $regex; // PHP Array of integer key Ids to regular expressions
     protected $singles; // Reference to single character lookup for tokenId
     protected $unknownId; // int value to represent single character not in singles.
     protected $newLineId; //
@@ -38,6 +39,11 @@ class TokenStream
 
     public function __construct()
     {
+        $this->caps = new Recap8();
+        $this->input = new Pun8();
+        
+        $this->flagLine = false;
+        $this->tokenLine = 0;
         $this->token = new Token();
     }
 
@@ -70,17 +76,17 @@ class TokenStream
    
 
     /**
-     * Return current expression set object
+     * Return current expression array
      */
-    public function getExpSet() {
+    public function getExpSet() : array {
         return $this->regex;
     }
     
      /**
-     * Argument is reference to associative array[int] of string regular expressions
+     * Reference to list integer keys to PCRE2
      * @param array $ref
      */
-    public function setExpSet(KeyTable $ref)
+    public function setExpSet(array $ref)
     {
         $this->regex = $ref;
     }
@@ -89,15 +95,19 @@ class TokenStream
      * Argument is reference to associative array[string] of int 
      * @param array $ref
      */
-    public function setSingles(KeyTable $ref)
+    public function setSingles(array $ref)
     {
         $this->singles = $ref;
     }
 
+    public function setRe8Map($remap) {
+        $this->input->setRe8map($remap);
+    }
     public function setInput(string $input)
     {
-        $boxme = new Box(explode("\n", $input));
-        $this->setLines($boxme);
+        $this->input->setString($input);
+        $this->flagLine = true;
+        $this->tokenLine = 0;
     }
 
     public function hasPendingTokens(): bool
@@ -132,31 +142,13 @@ class TokenStream
     }
 
     /** 
-     * Advance the parse then return the internal token id.
-     */
-    public function moveNextId(): int
-    {
-        return $this->parseNextId($this->regex);
-    }
-    /** 
      * Fetch internal token id.
      */
     public function getTokenId(): int
     {
         return $this->id;
     }
-    /** 
-      * This sets the parse state to before the first line.
-      * To get the first token, call moveNextId
-      */
-    public function setLines(Box $lines)
-    {
-        $this->lines = $lines;
-        $this->lineNo = 0;
-        $this->offset = 0;
-        $this->lineCount = count($lines->_me);
-        $this->curLine = ($this->lineCount > 0) ? $lines->_me[0] : null;
-    }
+
     
     /** Return the single character at the front of the parse. 
      *  Does not alter this objects internal state values,
@@ -168,46 +160,68 @@ class TokenStream
      */
     public function peekToken() : Token {
         // Put next characters in $test, not altering TokenStream state.
-        $test = $this->curLine;
+        
+        $input = $this->input;
+        $offset = $input->getOffset();
+        $text = $input->nextChar();
         $token = $this->token;
-        if (empty($test)) {
-            $nextLine = $this->lineNo + 1;
-            $token->line = $nextLine;
-            $token->isSingle = true;
-            if ($nextLine < $this->lineCount) {
-                $token->value = "";
-                $token->id = $this->newLineId;  
-            }
-            else {
-                $token->value = "";
-                $token->id = $this->eosId;
-            }
+        
+        if (!$this->isData($text)) {
+            $token->value = $this->value;
+            $token->id = $this->id;
+            $token->line = $this->tokenLine;
+            $token->isSingle = $this->isSingle;
+            $input->setOffset($offset); // reset original position
             return $token;
         }
-        $uni = mb_substr($test, 0, 1); // possible to be multi-byte character
-        $token->id = $this->singles->_store[$uni] ?? $this->unknownId;
-        $token->isSingle = ($this->id !== $this->unknownId);
-        $token->value = $uni;
         $token->line = $this->tokenLine;
+        $token->value = $text;
+        if (strlen($text) === 1) {
+            $token->id = $this->singles[$text] ?? $this->unknownId;
+        }
+        $token->isSingle = ($this->id !== $this->unknownId);
+       
+        $input->setOffset($offset);// reset original position
         return $token;
     }
-    
     /**
-     * Try regular expression, and return capture, if any.
+     * Try regular expression in the expression map
      * Assumes previous peekToken returned a known token.
      * Leaves tokenId as unknownId
      * @param string $regex
      */
-    public function moveRegex(string $pattern) : bool {
-        $test = $this->curLine;
-        $matches = null;
-        if (preg_match($pattern, $test, $matches)) {
-            $this->value = $matches[1];
+    public function moveRegId($id) : bool {
+        $input = $this->input;
+        $ct = $input->matchMapId($id, $this->caps);
+        if ($ct > 1)
+         {
+            $cap = $this->caps;
+            $this->value = $cap->getCap(1);
             $this->isSingle = false;
             $this->id = $this->unknownId;
-            $takeOff = strlen($matches[0]);
-            $this->offset += $takeOff;
-            $this->curLine = substr($test, $takeOff);
+            $takeOff = strlen($cap->getCap(0));
+            $this->input->addOffset($takeOff);
+            return true;
+        }   
+        return false;
+    }
+    /**
+     * Try regular expression not in the expression map
+     * Assumes previous peekToken returned a known token.
+     * Leaves tokenId as unknownId
+     * @param string $regex
+     */
+    public function moveRegex($pcre) : bool {
+        $input = $this->input;
+        $ct = $input->matchIdRex8($pcre, $this->caps);
+        if ($ct > 1)
+         {
+            $cap = $this->caps;
+            $this->value = $cap->getCap(1);
+            $this->isSingle = false;
+            $this->id = $this->unknownId;
+            $takeOff = strlen($cap->getCap(0));
+            $this->input->addOffset($takeOff);
             return true;
         }   
         return false;
@@ -221,92 +235,108 @@ class TokenStream
      * A call to getToken, will still return same values as the Token;
      */
     public function acceptToken()  {
+        if ($this->flagLine) {
+            $this->flagLine = false;
+            $this->tokenLine += 1;
+        }
         $token = $this->token;
+        $this->isSingle = $token->isSingle;
+        $this->id = $token->id;
+        $this->value = $token->value;
+        
         if ($token->id === $this->eosId) {
-            $this->value = "";
-            $this->id = $this->eosId;
             return;
         }
         elseif ($token->id === $this->newLineId) {
-            // do the next line
-            $nextLine = $this->lineNo + 1;
-            $this->curLine = $this->lines->_me[$nextLine];
-            $this->offset = 0;
-            $this->value = "";
-            $this->id = $this->newLineId;
-            $this->lineNo = $nextLine;
+            $this->input->addOffset(1);
             return;
         }
-        if ($this->offset === 0) {
-            $this->tokenLine = $this->lineNo + 1;
-        }
         $takeoff = strlen($token->value);
-        $this->curLine = substr($this->curLine, $takeoff);
-        $this->offset += $takeoff;
-        $this->id = $token->id;
-        $this->isSingle = $token->isSingle;
-        $this->value = $token->value;
+        $this->input->addOffset($takeoff);
         return;
     }
+    
+    private function setEOL()  {
+         $this->value = "";
+         $this->id = $this->newLineId;
+         $this->isSingle = true;
+    }
+    private function setEOS() {
+         $this->value = "";
+         $this->id = $this->eosId;
+         $this->isSingle = true;
+    }
+    
+    private function isData($text) : bool {
+        if ($text === false) {
+            $this->setEOS();
+            return false;
+        }
+        $input = $this->input;
+        $code = $input->getCode();
+        if ($code === 13) {
+            $text = $input->nextChar();
+            if (empty($test)) {
+                $this->setEOS();
+                return false;
+            }
+            $code = $input->getCode();
+            if ($code !== 10) {
+                throw new XArrayable("EOL? chr(13) but no chr(10)");
+            }
+        }
+        if ($code === 10) {
+            $this->flagLine = true; 
+            $this->setEOL();
+            return false;
+        }  
+        return true;
+    }
+    
     /**
-     * Set up the internal current token values, from the current parse
-     * position in the line, and move the parse position to the next. Return
-     * a token id.
-     * Returned token id may be a NEWLINE or EOS, before the
-     * $patterns are checked. If neither NEWLINE, EOS, or any of the 
-     * $patterns match, the next unicode character is checked against the
-     * assigned Singles table, and its token id is returned, or else
-     * the character value is assigned the UnknownId
+     * Return a tokenId, for a pattern, or character match.
+     * 
      * @param \Toml\KeyTable $patterns
      * @return int
      */
-    public function parseNextId(KeyTable $patterns) : int
+    public function moveNextId() : int
     {
-        if (empty($this->curLine)) {
-            $nextLine = $this->lineNo + 1;
-            if ($nextLine < $this->lineCount) {
-                $this->curLine = $this->lines->_me[$nextLine];
-                $this->offset = 0;
-                $this->value = "";
-                $this->id = $this->newLineId;
-                $this->lineNo = $nextLine;
-            } else {
-                $this->value = "";
-                $this->id = $this->eosId;
-            }
-            $this->isSingle = true; // really
+        if ($this->flagLine) {
+            $this->flagLine = false;
+            $this->tokenLine += 1;
+        }
+        $input = $this->input;
+        $offset = $input->getOffset();
+        $text = $input->nextChar();
+        
+        if (!$this->isData($text)) {
             return $this->id;
-        } elseif ($this->offset === 0) {
-            $this->tokenLine = $this->lineNo + 1;
         }
-        $test = $this->curLine;
-        $this->curLine = null;
-        foreach ($patterns->_store as $id => $pattern) {
-            $matches = null;
-            if (preg_match($pattern, $test, $matches)) {
-                $this->id = $id;
-                $this->value = $matches[1];
-                $this->isSingle = false;
-                $this->line = $this->tokenLine;
-                $takeOff = strlen($matches[0]);
-                $this->offset += $takeOff;
-                $this->curLine = substr($test, $takeOff);
-                return $this->id;
-            }
+        
+        $caps = $this->caps;
+        $input->setOffset($offset);
+        
+        $id = $input->firstMatch($this->regex, $caps);
+        // Not EOL or EOS, use original offset for pattern testing
+        
+        if ($caps->count() > 1) {
+            $this->id = $id;
+            $this->value = $caps->getCap(1);
+            $this->isSingle = false;
+            $takeOff = strlen($caps->getCap(0));
+            $input->addOffset($takeOff);
+            return $id;
         }
-        // no expressions matched, as a default, classify unicode character
-        $uni = mb_substr($test, 0, 1);
-        $takeoff = strlen($uni);
-        $this->offset += $takeoff;
-        $this->curLine = substr($test, $takeoff);
-        $this->value = $uni;
-
-        // There are a lot of single character lexer Ids, so just look
-        // them up in a table. If its not there, it is the all purpose 'T_CHAR'
-
-        $this->id = $this->singles->_store[$uni] ?? $this->unknownId;
+        $this->value = $text;
+        $ct = strlen($text);
+        
+        if ($ct === 1) {
+            $id = $this->singles[$text] ?? $this->unknownId;
+        }
         $this->isSingle = ($this->id !== $this->unknownId);
-        return $this->id;
+        $this->id = $id;
+        $input->addOffset($ct);
+        return $id;
     }
 
 }

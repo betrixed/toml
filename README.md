@@ -1,11 +1,13 @@
 This TOML parser implmentation for TOM04 was created in order to build a Zephir version,
 starting with the Yosymfony\Toml source.
 
-This version is maintained at [Betrixed\
+This fork is now well departed from, and is considerably faster than the original start version.
+The toml-zephir project is at 
+
 The few PHP TOML implementations I have seen all used array reference (array& $aref) 
 to generate and hold place in the TOML array tree.
 
-I chose to find out the hard way what it was like to write an extension using Zephir.
+I chose to find out what it was like to write an extension using Zephir.
 Zephir is an altered and cut-down analog of PHP language. Its parser written in PHP, and 
 it generates C source code which compiles to a PHP extension, largely by doing things
 with PHP objects and functions, called from C.
@@ -16,7 +18,7 @@ The same PHP objects and arrays are constructed from a TOML document file.
 
 So there is  irreducible overhead in changing the PHP interpreter machine state.
 Some ballpark testing on a few TOML files, demonstrates that the interpreted version on PHP 7.2,
-takes no more than 21-25% longer than the compiled Zephir extension with similar code.
+takes no more than 15% to 20% longer than the compiled Zephir extension with similar code.
 
 Table and TableList objects
 =========================

@@ -12,8 +12,7 @@
 namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Toml\Parser;
-use Toml\Lexer;
+use Pun\TomlReader as Parser;
 
 class ParserTest extends TestCase
 {
@@ -22,7 +21,7 @@ class ParserTest extends TestCase
 
     public function setUp()
     {
-        $this->parser = new Parser(new Lexer());
+        $this->parser = new Parser();
     }
 
     public function tearDown()
@@ -32,7 +31,7 @@ class ParserTest extends TestCase
 
     public function testParseMustReturnAnEmptyArrayWhenEmptyInput()
     {
-        $array = $this->parser->parse('');
+        $array = $this->parser->parse('')->toArray();
 
         $this->assertEquals([], $array);
     }
@@ -43,7 +42,7 @@ class ParserTest extends TestCase
         t = true
         f = false
 toml;
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             't' => true,
@@ -60,7 +59,7 @@ toml;
         underscore = 1_2_3_4_5
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'answer' => 42,
@@ -77,7 +76,7 @@ toml;
         neganswer = -9223372036854775808
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'answer' => 9223372036854775807,
@@ -98,7 +97,7 @@ toml;
         underscore = 6.6_26e-3_4
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'pi' => 3.14,
@@ -119,7 +118,7 @@ toml;
         neglongpi = -3.141592653589793
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'longpi' => 3.141592653589793,
@@ -129,7 +128,7 @@ toml;
 
     public function testParseMustParseBasicStringsWithASimpleString()
     {
-        $array = $this->parser->parse('answer = "You are not drinking enough whisky."');
+        $array = $this->parser->parse('answer = "You are not drinking enough whisky."')->toArray();
 
         $this->assertEquals([
             'answer' => 'You are not drinking enough whisky.',
@@ -138,7 +137,7 @@ toml;
 
     public function testParseMustParseAnEmptyString()
     {
-        $array = $this->parser->parse('answer = ""');
+        $array = $this->parser->parse('answer = ""')->toArray();
 
         $this->assertEquals([
             'answer' => '',
@@ -159,7 +158,7 @@ toml;
         notunicode2 = "This string does not have a unicode \\u0075 escape."
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
         $this->assertEquals([
             'backspace' => "This string has a " . chr(8) . " backspace character.",
             'tab' => "This string has a \t tab character.",
@@ -180,7 +179,7 @@ toml;
         poundcomment = "But there are # some comments here." # Did I # mess you up?
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
         $this->assertEquals([
             'pound' => 'We see no # comments here.',
             'poundcomment' => 'But there are # some comments here.'
@@ -194,17 +193,17 @@ toml;
         answer8 = "\U000003B4"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'answer4' => json_decode('"\u03B4"'),
-            'answer8' => json_decode('"\u0000\u03B4"'),
+            'answer8' => json_decode('"\u03B4"'),
                 ], $array);
     }
 
     public function testParseMustParseStringWithALiteralUnicodeCharacter()
     {
-        $array = $this->parser->parse('answer = "δ"');
+        $array = $this->parser->parse('answer = "δ"')->toArray();
 
         $this->assertEquals([
             'answer' => 'δ',
@@ -239,7 +238,7 @@ The quick brown \
                """
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'multiline_empty_one' => '',
@@ -266,7 +265,7 @@ toml;
         braces_too = 'Braces are [part.of] {life="good"}'
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'backspace' => 'This string has a \b backspace character.',
@@ -294,7 +293,7 @@ one newline
 in it.'''
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'oneline' => "This string has a ' quote character.",
@@ -315,7 +314,7 @@ toml;
 
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'bestdayever' => new \Datetime('1987-07-05T17:45:00Z'),
@@ -329,7 +328,7 @@ toml;
 
     public function testParseMustParseArraysWithNoSpaces()
     {
-        $array = $this->parser->parse('ints = [1,2,3]');
+        $array = $this->parser->parse('ints = [1,2,3]')->toArray();
 
         $this->assertEquals([
             'ints' => [1, 2, 3],
@@ -338,7 +337,7 @@ toml;
 
     public function testParseMustParseHeterogeneousArrays()
     {
-        $array = $this->parser->parse('mixed = [[1, 2], ["a", "b"], [1.1, 2.1]]');
+        $array = $this->parser->parse('mixed = [[1, 2], ["a", "b"], [1.1, 2.1]]')->toArray();
 
         $this->assertEquals([
             'mixed' => [
@@ -351,7 +350,7 @@ toml;
 
     public function testParseMustParseArraysNested()
     {
-        $array = $this->parser->parse('nest = [["a"], ["b"]]');
+        $array = $this->parser->parse('nest = [["a"], ["b"]]')->toArray();
 
         $this->assertEquals([
             'nest' => [
@@ -363,7 +362,7 @@ toml;
 
     public function testArrayEmpty()
     {
-        $array = $this->parser->parse('thevoid = [[[[[]]]]]');
+        $array = $this->parser->parse('thevoid = [[[[[]]]]]')->toArray();
 
         $this->assertEquals([
             'thevoid' => [
@@ -395,7 +394,7 @@ Violets are blue""",]
         ]
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'ints' => [1, 2, 3],
@@ -416,7 +415,7 @@ toml;
 
     public function testParseMustParseAKeyWithoutNameSpacesAroundEqualSign()
     {
-        $array = $this->parser->parse('answer=42');
+        $array = $this->parser->parse('answer=42')->toArray();
 
         $this->assertEquals([
             'answer' => 42,
@@ -425,7 +424,7 @@ toml;
 
     public function testParseMustParseKeyWithSpace()
     {
-        $array = $this->parser->parse('"a b" = 1');
+        $array = $this->parser->parse('"a b" = 1')->toArray();
 
         $this->assertNotNull($array);
 
@@ -436,7 +435,7 @@ toml;
 
     public function testParseMustParseKeyWithSpecialCharacters()
     {
-        $array = $this->parser->parse('"~!@$^&*()_+-`1234567890[]|/?><.,;:\'" = 1');
+        $array = $this->parser->parse('"~!@$^&*()_+-`1234567890[]|/?><.,;:\'" = 1')->toArray();
 
         $this->assertEquals([
             '~!@$^&*()_+-`1234567890[]|/?><.,;:\'' => 1,
@@ -445,7 +444,7 @@ toml;
 
     public function testParseMustParseAnEmptyTable()
     {
-        $array = $this->parser->parse('[a]');
+        $array = $this->parser->parse('[a]')->toArray();
 
         $this->assertEquals([
             'a' => [],
@@ -454,7 +453,7 @@ toml;
 
     public function testParseMustParseATableWithAWhiteSpaceInTheName()
     {
-        $array = $this->parser->parse('["valid key"]');
+        $array = $this->parser->parse('["valid key"]')->toArray();
 
         $this->assertEquals([
             'valid key' => [],
@@ -468,7 +467,7 @@ toml;
         type = "pug"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'dog' => [
@@ -486,7 +485,7 @@ toml;
         answer = 42
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'key#group' => [
@@ -501,7 +500,7 @@ toml;
         [a]
         [a.b]
 toml;
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'a' => [
@@ -517,7 +516,7 @@ toml;
         answer = 42
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'a' => [
@@ -540,7 +539,7 @@ toml;
         better = 43
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'a' => [
@@ -564,7 +563,7 @@ toml;
         answer = 42
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'a' => [
@@ -580,7 +579,7 @@ toml;
 
     public function testParseMustParseInlineTableEmpty()
     {
-        $array = $this->parser->parse('name = {}');
+        $array = $this->parser->parse('name = {}')->toArray();
 
         $this->assertEquals([
             'name' => [],
@@ -589,7 +588,7 @@ toml;
 
     public function testParseMustParseInlineTableOneElement()
     {
-        $array = $this->parser->parse('name = { first = "Tom" }');
+        $array = $this->parser->parse('name = { first = "Tom" }')->toArray();
 
         $this->assertEquals([
             'name' => [
@@ -605,7 +604,7 @@ toml;
         key1 = {name='Donald Duck'}
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'tab1' => [
@@ -633,7 +632,7 @@ inline = { x = 1, y = { a = 2, "b.deep" = 'my value' } }
 another = {number = 1}
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'name' => [
@@ -668,7 +667,7 @@ toml;
         name = "Glory Days"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'albums' => [
@@ -689,7 +688,7 @@ toml;
         [test]
         'Like me' = 'yes'
 toml;
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'test' => [
@@ -715,7 +714,7 @@ toml;
     color = "yellow"
     shape = "bent"
 toml;
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'fruit' => [
@@ -750,7 +749,7 @@ toml;
         1 = 'chat'
         10 = 'say bye'
 toml;
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'sequence' => [
@@ -770,7 +769,7 @@ toml;
         last_name = "Springsteen"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'people' => [
@@ -798,7 +797,7 @@ toml;
         last_name = "Seger"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'people' => [
@@ -840,7 +839,7 @@ toml;
           name = "Dancing in the Dark"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'albums' => [
@@ -878,7 +877,7 @@ toml;
         name = "granny smith"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'fruit' => [
@@ -920,8 +919,7 @@ toml;
         ] # Hopefully not.
 toml;
 
-        $array = $this->parser->parse($toml);
-
+        $array   = $this->parser->parse($toml)->toArray();
         $this->assertNotNull($array);
 
         $this->assertArrayHasKey('answer', $array['group']);
@@ -943,7 +941,7 @@ toml;
         perfection = [6, 28, 496]
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'best-day-ever' => new \DateTime('1987-07-05T17:45:00Z'),
@@ -966,7 +964,7 @@ toml;
         name = "Born in the USA"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'albums' => [
@@ -1002,7 +1000,7 @@ toml;
             name = "Born in the USA"
 toml;
 
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'albums' => [
@@ -1042,7 +1040,7 @@ toml;
     color = "yellow"
     shape = "bent"
 toml;
-        $array = $this->parser->parse($toml);
+        $array = $this->parser->parse($toml)->toArray();
 
         $this->assertEquals([
             'fruit' => [

@@ -7,6 +7,8 @@ namespace Toml;
  * @author Michael Rynn
  * 
  */
+use Pun\Token8;
+
 class TokenList
 {
     protected $tokens;
@@ -41,7 +43,7 @@ class TokenList
         if ($index < $this->ct) {
             $this->index = $index;
             $this->token = $this->tokens[$index];
-            return $this->token->id;
+            return $this->token->getId();
         }
         return 0;
     }
@@ -58,7 +60,7 @@ class TokenList
         foreach ($tokenIds as $idx => $id) {
             $offset = $idx + $base;
             if ($offset < $this->ct) {
-                if ($this->tokens[$offset]->id != $id)
+                if ($this->tokens[$offset]->getId() != $id)
                     return false;
             }
         }
@@ -76,7 +78,7 @@ class TokenList
         $this->index = $next;
         if ($next < $this->ct) {
             $this->token = $this->tokens[$next];
-            return $this->token->id;
+            return $this->token->getId();
         }
         return 0;
     }
@@ -85,15 +87,15 @@ class TokenList
      * Token from current parse position
      * @return \Toml\Token
      */
-    public function getToken() : ?Token {
+    public function getToken() : ?Token8 {
         return $this->token;
     }
     /** 
      * Token id from current parse position
      *  
      */
-    public function getTokenId() : int {
-        return (!is_null($this->token)) ? $this->token->id : 0;
+    public function getId() : int {
+        return (!is_null($this->token)) ? $this->token->getId() : 0;
     }
     
     /** 
@@ -101,6 +103,6 @@ class TokenList
      *  
      */
     public function getValue()  {
-        return (!is_null($this->token)) ? $token->value : null;
+        return (!is_null($this->token)) ? $token->getValue() : null;
     }
 }

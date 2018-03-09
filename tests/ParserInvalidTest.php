@@ -12,9 +12,7 @@
 namespace TomlTests;
 
 use PHPUnit\Framework\TestCase;
-use Toml\Parser;
-use Toml\Lexer;
-use Toml\TokenStream;
+use Pun\TomlReader as Parser;
 
 class ParserInvalidTest extends TestCase
 {
@@ -22,7 +20,7 @@ class ParserInvalidTest extends TestCase
 
     public function setUp()
     {
-        $this->parser = new Parser(new Lexer());
+        $this->parser = new Parser();
     }
 
     public function tearDown()
@@ -31,8 +29,8 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expect Key = , [Path] or # Comment. Value { = }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expect Key = , [Path] or # Comment. Value { = }.
      */
     public function testKeyEmpty()
     {
@@ -40,8 +38,8 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1. Value { # = 1 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected: equal { = }.
      */
     public function testParseMustFailWhenKeyHash()
     {
@@ -49,8 +47,8 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1. Value {  }. 
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected: equal { = }. 
      */
     public function testParseMustFailWhenKeyNewline()
     {
@@ -58,8 +56,8 @@ class ParserInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 2: Duplicate key. Value { dupe }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 2. Duplicate key.
      */
     public function testDuplicateKeys()
     {
@@ -74,8 +72,8 @@ toml;
     /**
      * TOM04 spaces around '.' can be ignored, therefore space after a key name
      * isn't a problem, the problem is the first wrong character, the '='
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Unexpected '=' in path at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Unexpected '=' in path. Value { = }.
      */
     public function testParseMustFailWhenKeyOpenBracket()
     {
@@ -83,8 +81,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Table path cannot be empty at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Table path cannot be empty.
      */
     public function testParseMustFailWhenKeySingleOpenBracket()
     {
@@ -92,8 +90,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected T_EQUAL (=) on line 1. Value {  b = 1 }
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected: equal { = }.
      */
     public function testParseMustFailWhenKeySpace()
     {
@@ -101,8 +99,8 @@ toml;
     }
     /** TOM04 - White space around . is ignored, best practice is no white space, but
      * the fail problem is the '='
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Unexpected '=' in path at line 2
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 2. Unexpected '=' in path. Value { = }.
      */
     public function testParseMustFailWhenKeyStartBracket()
     {
@@ -111,8 +109,8 @@ toml;
 
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Value type expected. Value { = }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. No value type match found for =. Value { = }.
      */
     public function testParseMustFailWhenKeyTwoEquals()
     {
@@ -120,8 +118,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { the }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected NEWLINE or EOS. Value { the }.
      */
     public function testParseMustFailWhenTextAfterInteger()
     {
@@ -129,8 +127,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Invalid integer number: leading zeros are not allowed. Value { 042 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid integer: Leading zeros not allowed. Value { 042 }.
      */
     public function testParseMustFailWhenIntegerLeadingZeros()
     {
@@ -138,8 +136,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Value type expected. Value { _ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. No value type match found for _42. Value { _42 }.
      */
     public function testParseMustFailWhenIntegerLeadingUnderscore()
     {
@@ -147,8 +145,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Invalid integer number: underscore must be surrounded by at least one digit. Value { 42_ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid integer: Underscore must be between digits. Value { 42_ }.
      */
     public function testParseMustFailWhenIntegerFinalUnderscore()
     {
@@ -156,8 +154,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Invalid integer number: leading zeros are not allowed. Value { 0_42 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid integer: Leading zeros not allowed. Value { 0_42 }.
      */
     public function testParseMustFailWhenIntegerLeadingZerosWithUnderscore()
     {
@@ -165,8 +163,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Value type expected. Value { . }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. No value type match found for .12345. Value { .12345 }.
      */
     public function testParseMustFailWhenFloatNoLeadingZero()
     {
@@ -179,8 +177,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { . }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Float needs at least one digit after decimal point. Value { 1. }.
      */
     public function testParseMustFailWhenFloatNoTrailingDigits()
     {
@@ -193,8 +191,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Value type expected. Value { _ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. No value type match found for _1.01. Value { _1.01 }.
      */
     public function testParseMustFailWhenFloatLeadingUnderscore()
     {
@@ -202,8 +200,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Invalid float number: underscore must be surrounded by at least one digit. Value { 1.01_ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid float: Underscore must be between digits. Value { 1.01_ }.
      */
     public function testParseMustFailWhenFloatFinalUnderscore()
     {
@@ -211,8 +209,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Invalid float number: underscore must be surrounded by at least one digit. Value { 1_e6 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid float with exponent: Underscore must be between digits. Value { 1_e6 }.
      */
     public function testParseMustFailWhenFloatUnderscorePrefixE()
     {
@@ -220,8 +218,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { e_6 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid float with exponent: Underscore must be between digits. Value { 1e_6 }.
      */
     public function testParseMustFailWhenFloatUnderscoreSuffixE()
     {
@@ -229,8 +227,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { -7-05T17 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Value { 1987 } is not full match for { 1987-7-05T17:45:00Z }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoLeads()
     {
@@ -238,8 +236,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { T17 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Value { 1987-07-05 } is not full match for { 1987-07-05T17:45Z }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoSecs()
     {
@@ -247,8 +245,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { 17 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Value { 1987-07-05 } is not full match for { 1987-07-0517:45:00Z }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoT()
     {
@@ -256,8 +254,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { -07-5T17 }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Value { 1987 } is not full match for { 1987-07-5T17:45:00.12Z }.
      */
     public function testParseMustFailWhenDatetimeMalformedWithMilli()
     {
@@ -265,8 +263,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Unfinished string value. Value { \ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. parseEscString: Unfinished string value. Value { \ }.
      */
     public function testParseMustFailWhenBasicStringHasBadByteEscape()
     {
@@ -274,8 +272,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Unfinished string value. Value { \ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. parseEscString: Unfinished string value. Value { \ }.
      * 
      */
     public function testParseMustFailWhenBasicStringHasBadEscape()
@@ -284,8 +282,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Unfinished string value. Value { \ }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. parseEscString: Unfinished string value. Value { \ }
      */
     public function testParseMustFailWhenBasicStringHasByteEscapes()
     {
@@ -293,8 +291,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Unfinished string value.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. parseEscString: Unfinished string value.
      */
     public function testParseMustFailWhenBasicStringIsNotClose()
     {
@@ -302,8 +300,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { No }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected NEWLINE or EOS. Value { No }.
      */
     public function testParseMustFailWhenThereIsTextAfterBasicString()
     {
@@ -311,8 +309,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Cannot add array to list of integer at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Cannot add object to list of integer. Value { [ }.
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesArraysAndInts()
     {
@@ -320,24 +318,24 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Type double cannot be added to ValueList of integer at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Cannot add float to list of integer
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesIntsAndFloats()
     {
         $this->parser->parse('ints-and-floats = [1, 1.1]');
     }
 /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Type integer cannot be added to ValueList of double at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Cannot add integer to list of float
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesFloatAndInts()
     {
         $this->parser->parse('ints-and-floats = [1.1, 1]');
     }
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Type integer cannot be added to ValueList of string at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Cannot add integer to list of string.
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesStringsAndInts()
     {
@@ -345,8 +343,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Value type expected. Value { N }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 2. No value type match found for No. Value { No }.
      */
     public function testParseMustFailWhenAppearsTextAfterArrayEntries()
     {
@@ -361,8 +359,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Value type expected. Value { N }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 2. No value type match found for No. Value { No }.
      */
     public function testParseMustFailWhenAppearsTextBeforeArraySeparator()
     {
@@ -377,8 +375,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage  Error line 1: Value type expected. Value { I }.
+     * @expectedException Exception
+     * @expectedExceptionMessage  Toml Parse at line 3. No value type match found for I. Value { I }.
      */
     public function testParseMustFailWhenAppearsTextInArray()
     {
@@ -393,8 +391,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Duplicate key path: {fruit}.type line 4
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 4. Duplicate key path: {fruit}.type.
      */
     public function testParseMustFailWhenDuplicateKeyTable()
     {
@@ -410,8 +408,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Duplicate key path: [{a}] line 2
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 2. Duplicate key path: {a}. Value { ] }.
      */
     public function testParseMustFailWhenDuplicateTable()
     {
@@ -424,8 +422,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Table path cannot be empty at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Table path cannot be empty. Value { ] }.
      */
     public function testParseMustFailWhenTableEmpty()
     {
@@ -434,8 +432,8 @@ toml;
 
     /**
      * TOM04 - expected a dot
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected a '.' after path key at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected a '.' after path part.
      */
     public function testParseMustFailWhenTableWhitespace()
     {
@@ -443,8 +441,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Found '..' in path at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Too many consecutive . . in path. Value { . }.
      */
     public function testParseMustFailWhenEmptyImplicitTable()
     {
@@ -452,8 +450,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Unexpected '#' in path at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Unexpected '#' in path. Value { # }.
      */
     public function testParseMustFailWhenTableWithPound()
     {
@@ -461,8 +459,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { this }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected NEWLINE or EOS. Value { this }.
      */
     public function testParseMustFailWhenTextAfterTable()
     {
@@ -470,8 +468,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Expected a '.' after path key at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected a '.' after path part. Value { [ }.
      */
     public function testParseMustFailWhenTableNestedBracketsOpen()
     {
@@ -484,8 +482,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Expected NEWLINE or EOS. Value { b }.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Expected NEWLINE or EOS. Value { b }.
      */
     public function testParseMustFailWhenTableNestedBracketsClose()
     {
@@ -497,8 +495,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Error line 1: Improper key.
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. Improper Key.
      */
     public function testParseMustFailWhenInlineTableWithNewline()
     {
@@ -512,8 +510,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage Table path mismatch with [fruit][variety] line 8
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 8. Table path mismatch with [fruit][variety]. Value { ] }.
      */
     public function testParseMustFailWhenTableArrayWithSameNameOfTable()
     {
@@ -533,8 +531,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage AOT Segment cannot be empty at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. AOT Segment cannot be empty. Value { ] }.
      */
     public function testParseMustFailWhenTableArrayMalformedEmpty()
     {
@@ -547,8 +545,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage New line in unfinished path at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. New line in unfinished path.
      */
     public function testParseMustFailWhenTableArrayMalformedBracket()
     {
@@ -561,8 +559,8 @@ toml;
     }
 
     /**
-     * @expectedException Toml\XArrayable
-     * @expectedExceptionMessage AOT Segment cannot be empty at line 1
+     * @expectedException Exception
+     * @expectedExceptionMessage Toml Parse at line 1. AOT Segment cannot be empty. Value { ] }.
      */
     public function testParseAOTSegmentNoneEmpty()
     {
