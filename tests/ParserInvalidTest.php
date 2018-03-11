@@ -310,7 +310,7 @@ toml;
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Toml Parse at line 1. Cannot add object to list of integer. Value { [ }.
+     * @expectedExceptionMessage Toml Parse at line 1. Cannot add value of type list to ValueList of type integer. Value { [ }.
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesArraysAndInts()
     {
@@ -319,7 +319,7 @@ toml;
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Cannot add float to list of integer
+     * @expectedExceptionMessage Toml Parse at line 1. Cannot add value of type float to ValueList of type integer. Value { 1.1 }.
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesIntsAndFloats()
     {
@@ -327,7 +327,7 @@ toml;
     }
 /**
      * @expectedException Exception
-     * @expectedExceptionMessage Cannot add integer to list of float
+     * @expectedExceptionMessage Toml Parse at line 1. Cannot add value of type integer to ValueList of type float. Value { 1 }.
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesFloatAndInts()
     {
@@ -335,7 +335,7 @@ toml;
     }
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Toml Parse at line 1. Cannot add integer to list of string.
+     * @expectedExceptionMessage Toml Parse at line 1. Cannot add value of type integer to ValueList of type string. Value { 42 }.
      */
     public function testParseMustFailWhenThereIsAnArrayWithMixedTypesStringsAndInts()
     {
