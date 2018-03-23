@@ -155,7 +155,7 @@ toml;
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Toml Parse at line 1. Invalid integer: Leading zeros not allowed. Value { 0_42 }.
+     * @expectedExceptionMessage Toml Parse at line 1. Invalid integer: Leading zeros not allowed. Value { 042 }. Value { 0_42 }.
      */
     public function testParseMustFailWhenIntegerLeadingZerosWithUnderscore()
     {
@@ -228,7 +228,7 @@ toml;
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Toml Parse at line 1. Value { 1987 } is not full match for { 1987-7-05T17:45:00Z }.
+     * @expectedExceptionMessage Toml Parse at line 1. No value type match found for 1987-7-05T17:45:00Z. Value { 1987-7-05T17:45:00Z }.
      */
     public function testParseMustFailWhenDatetimeMalformedNoLeads()
     {
@@ -255,7 +255,7 @@ toml;
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Toml Parse at line 1. Value { 1987 } is not full match for { 1987-07-5T17:45:00.12Z }.
+     * @expectedExceptionMessage Toml Parse at line 1. No value type match found for 1987-07-5T17:45:00.12Z. Value { 1987-07-5T17:45:00.12Z }.
      */
     public function testParseMustFailWhenDatetimeMalformedWithMilli()
     {
